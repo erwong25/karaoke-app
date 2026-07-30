@@ -1,0 +1,12 @@
+{
+  "name": "encore-karaoke",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=@encore/web",
+    "dev:api": "npm run dev --workspace=@encore/api",
+    "dev:mobile": "npm run start --workspace=@encore/mobile",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "engines": { "node": ">=20" }
+}

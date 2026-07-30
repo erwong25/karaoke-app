@@ -1,0 +1,6 @@
+{
+  "name":"@encore/web","private":true,"version":"1.0.0","type":"module",
+  "scripts":{"dev":"vite","build":"tsc -b && vite build","preview":"vite preview"},
+  "dependencies":{"@encore/types":"*","@vitejs/plugin-react":"latest","socket.io-client":"latest","react":"latest","react-dom":"latest"},
+  "devDependencies":{"typescript":"latest","vite":"latest","tailwindcss":"^3.4.17","postcss":"latest","autoprefixer":"latest","@types/react":"latest","@types/react-dom":"latest"}
+}
