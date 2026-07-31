@@ -10,6 +10,8 @@ const codeFromUrl =
   new URLSearchParams(location.search).get("room")?.toUpperCase() || "";
 const hostTokenKey = (code: string) => `encore:host:${code}`;
 const displayNameKey = "encore:display-name";
+const hostThemeKey = "encore:host-theme";
+type HostTheme = "default" | "light";
 
 type YouTubePlayerInstance = {
   loadVideoById: (videoId: string) => void;
@@ -384,6 +386,9 @@ function App() {
   const [error, setError] = useState("");
   const [starting, setStarting] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [theme, setTheme] = useState<HostTheme>(
+    () => (localStorage.getItem(hostThemeKey) === "light" ? "light" : "default"),
+  );
   const advancingSong = useRef(false);
   const join = async (create = false) => {
     setError("");
@@ -551,8 +556,14 @@ function App() {
     setInviteCopied(true);
     setTimeout(() => setInviteCopied(false), 2000);
   };
+  const changeTheme = (nextTheme: HostTheme) => {
+    setTheme(nextTheme);
+    localStorage.setItem(hostThemeKey, nextTheme);
+  };
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_80%_0%,#442958,transparent_30%),#100e1b]">
+    <main
+      className={`min-h-screen bg-[radial-gradient(circle_at_80%_0%,#442958,transparent_30%),#100e1b] ${theme === "light" ? "theme-light" : ""}`}
+    >
       <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-6">
         <div className="font-display text-2xl">
           <span className="mr-2 rounded bg-lime px-2 py-1 font-sans text-sm text-ink">
@@ -561,6 +572,18 @@ function App() {
           encore
         </div>
         <div className="flex items-center gap-4">
+          <label className="text-right">
+            <span className="eyebrow block">THEME</span>
+            <select
+              value={theme}
+              onChange={(event) => changeTheme(event.target.value as HostTheme)}
+              className="theme-select mt-1"
+              aria-label="Host theme"
+            >
+              <option value="default">Default</option>
+              <option value="light">Light</option>
+            </select>
+          </label>
           <button onClick={copyInvite} className="action">
             {inviteCopied ? "Invite copied!" : "Invite"}
           </button>

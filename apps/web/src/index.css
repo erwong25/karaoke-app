@@ -1,3 +1,85 @@
-@tailwind base;@tailwind components;@tailwind utilities;
-@layer base { body{@apply min-h-screen bg-ink font-sans text-white antialiased;} button,input{@apply font-sans;} }
-@layer components {.panel{@apply rounded-2xl border border-white/10 bg-white/[.06] shadow-2xl shadow-black/20 backdrop-blur-sm;}.eyebrow{@apply text-[10px] font-bold tracking-[.17em] text-white/45;}.action{@apply rounded-lg bg-lime px-3 py-2 text-xs font-bold text-ink transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50;}.ghost{@apply rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 transition hover:bg-white/10;}}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply min-h-screen bg-ink font-sans text-white antialiased;
+  }
+
+  button,
+  input,
+  select {
+    @apply font-sans;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply rounded-2xl border border-white/10 bg-white/[.06] shadow-2xl shadow-black/20 backdrop-blur-sm;
+  }
+
+  .eyebrow {
+    @apply text-[10px] font-bold tracking-[.17em] text-white/45;
+  }
+
+  .action {
+    @apply rounded-lg bg-lime px-3 py-2 text-xs font-bold text-ink transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .ghost {
+    @apply rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 transition hover:bg-white/10;
+  }
+
+  .theme-select {
+    @apply rounded-md border border-white/15 bg-black/20 px-2 py-1 text-xs font-semibold text-white outline-none focus:border-lime;
+  }
+}
+
+.theme-light {
+  background: radial-gradient(circle at 80% 0%, #d8c7f4, transparent 34%),
+    radial-gradient(circle at 10% 100%, #b9e7df, transparent 32%), #f8fafc !important;
+  color: #1e293b;
+}
+
+.theme-light .panel {
+  border-color: #d8dee9;
+  background: rgb(255 255 255 / 0.86);
+  box-shadow: 0 20px 45px rgb(71 85 105 / 0.12);
+}
+
+.theme-light .eyebrow {
+  color: rgb(71 85 105 / 0.8);
+}
+
+.theme-light .ghost,
+.theme-light .theme-select {
+  border-color: #cbd5e1;
+  background: rgb(255 255 255 / 0.72);
+  color: #334155;
+}
+
+.theme-light .ghost:hover {
+  background: #eef2ff;
+}
+
+.theme-light input {
+  border-color: #cbd5e1;
+  background: #fff;
+  color: #1e293b;
+}
+
+.theme-light [class~="text-white/30"],
+.theme-light [class~="text-white/35"],
+.theme-light [class~="text-white/40"],
+.theme-light [class~="text-white/45"],
+.theme-light [class~="text-white/50"],
+.theme-light [class~="text-white/55"],
+.theme-light [class~="text-white/70"] {
+  color: rgb(71 85 105 / 0.82) !important;
+}
+
+.theme-light [class~="border-white/10"],
+.theme-light [class~="border-white/15"] {
+  border-color: #d8dee9 !important;
+}
