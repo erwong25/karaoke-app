@@ -9,6 +9,7 @@ const socket = io(API, { autoConnect: false });
 const codeFromUrl =
   new URLSearchParams(location.search).get("room")?.toUpperCase() || "";
 const hostTokenKey = (code: string) => `encore:host:${code}`;
+const displayNameKey = "encore:display-name";
 
 function YouTubePlayer({ videoId }: { videoId?: string }) {
   if (!videoId)
@@ -95,7 +96,15 @@ function QueueRow({ song, position }: { song: QueueItem; position: number }) {
   );
 }
 
-function Search({ room, onAdded }: { room: Room; onAdded: () => void }) {
+function Search({
+  room,
+  onAdded,
+  userName,
+}: {
+  room: Room;
+  onAdded: () => void;
+  userName: string;
+}) {
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<Video[]>([]);
   const [loading, setLoading] = useState(false);
@@ -136,7 +145,7 @@ function Search({ room, onAdded }: { room: Room; onAdded: () => void }) {
     const response = await fetch(`${API}/api/rooms/${room.code}/queue`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...video, addedBy: "Guest" }),
+      body: JSON.stringify({ ...video, addedBy: userName }),
     });
     if (!response.ok) {
       setMessage("Could not add that song. Please try again.");
@@ -193,7 +202,15 @@ function Search({ room, onAdded }: { room: Room; onAdded: () => void }) {
   );
 }
 
-function GuestRoom({ room, onAdded }: { room: Room; onAdded: () => void }) {
+function GuestRoom({
+  room,
+  onAdded,
+  userName,
+}: {
+  room: Room;
+  onAdded: () => void;
+  userName: string;
+}) {
   const openSearch = () => {
     document
       .getElementById("song-search")
@@ -213,7 +230,8 @@ function GuestRoom({ room, onAdded }: { room: Room; onAdded: () => void }) {
           encore
         </div>
         <div className="text-right">
-          <p className="eyebrow">YOU JOINED</p>
+          <p className="eyebrow">YOU JOINED AS</p>
+          <b className="block truncate text-sm">{userName}</b>
           <b className="tracking-[.18em]">{room.code}</b>
         </div>
       </header>
@@ -238,7 +256,7 @@ function GuestRoom({ room, onAdded }: { room: Room; onAdded: () => void }) {
             </button>
           </div>
         </section>
-        <Search room={room} onAdded={onAdded} />
+        <Search room={room} onAdded={onAdded} userName={userName} />
         <Queue room={room} host={false} onSkip={() => undefined} />
       </div>
     </main>
@@ -249,11 +267,19 @@ function App() {
   const [room, setRoom] = useState<Room | null>(null);
   const [code, setCode] = useState(codeFromUrl);
   const [name, setName] = useState("Friday night singalong");
+  const [userName, setUserName] = useState(
+    () => localStorage.getItem(displayNameKey) || "",
+  );
   const [host, setHost] = useState(false);
   const [error, setError] = useState("");
   const [starting, setStarting] = useState(false);
   const join = async (create = false) => {
     setError("");
+    const displayName = userName.trim();
+    if (!displayName) {
+      setError("Enter your name before starting or joining a party.");
+      return;
+    }
     if (create) setStarting(true);
     const requestUrl = create
       ? `${API}/api/rooms`
@@ -279,6 +305,7 @@ function App() {
         return;
       }
       const data: Room = await response.json();
+      localStorage.setItem(displayNameKey, displayName);
       setRoom(data);
       setCode(data.code);
       const token = create
@@ -353,6 +380,16 @@ function App() {
               className="mt-2 w-full rounded-lg border border-white/15 bg-black/20 px-3 py-3 text-sm outline-none focus:border-lime"
             />
           </label>
+          <label className="mt-4 block text-xs font-bold text-white/65">
+            Your name
+            <input
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              className="mt-2 w-full rounded-lg border border-white/15 bg-black/20 px-3 py-3 text-sm outline-none focus:border-lime"
+              placeholder="Your karaoke name"
+              maxLength={50}
+            />
+          </label>
           <button
             disabled={starting}
             onClick={() => join(true)}
@@ -361,6 +398,16 @@ function App() {
             {starting ? "Starting party…" : "Start a party →"}
           </button>
           <div className="my-6 h-px bg-white/10" />
+          <label className="block text-xs font-bold text-white/65">
+            Your name
+            <input
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              className="mt-2 w-full rounded-lg border border-white/15 bg-black/20 px-3 py-3 text-sm outline-none focus:border-lime"
+              placeholder="Your karaoke name"
+              maxLength={50}
+            />
+          </label>
           <label className="block text-xs font-bold text-white/65">
             Have a room code?
             <div className="mt-2 flex gap-2">
@@ -379,7 +426,8 @@ function App() {
         </div>
       </main>
     );
-  if (!host) return <GuestRoom room={room} onAdded={refresh} />;
+  if (!host)
+    return <GuestRoom room={room} onAdded={refresh} userName={userName.trim()} />;
   const invite = `${location.origin}?room=${room.code}`;
   const openSearch = () => {
     document
@@ -404,7 +452,7 @@ function App() {
             + Add a song
           </button>
           <div className="text-right">
-            <p className="eyebrow">ROOM CODE</p>
+            <p className="eyebrow">HOST: {userName.trim()}</p>
             <b className="tracking-[.2em]">{room.code}</b>
           </div>
         </div>
@@ -450,7 +498,7 @@ function App() {
           </button>
         </aside>
         <Queue room={room} host onSkip={skip} />
-        <Search room={room} onAdded={refresh} />
+        <Search room={room} onAdded={refresh} userName={userName.trim()} />
       </div>
     </main>
   );
