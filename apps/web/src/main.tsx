@@ -435,15 +435,6 @@ function App() {
     setInviteCopied(true);
     setTimeout(() => setInviteCopied(false), 2000);
   };
-  const openSearch = () => {
-    document
-      .getElementById("song-search")
-      ?.scrollIntoView({ behavior: "smooth", block: "center" });
-    setTimeout(
-      () => document.getElementById("song-search-input")?.focus(),
-      350,
-    );
-  };
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_80%_0%,#442958,transparent_30%),#100e1b]">
       <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-6">
@@ -453,20 +444,9 @@ function App() {
           </span>
           encore
         </div>
-        <div className="flex items-center gap-4">
-          <button onClick={openSearch} className="action">
-            + Add a song
-          </button>
-          <div className="text-right">
-            <p className="eyebrow">HOST: {userName.trim()}</p>
-            <div className="flex items-center justify-end gap-2">
-              <b className="tracking-[.2em]">{room.code}</b>
-              <button onClick={copyInvite} className="ghost px-3 py-1 text-xs">
-                {inviteCopied ? "Copied!" : "Invite"}
-              </button>
-            </div>
-          </div>
-        </div>
+        <button onClick={copyInvite} className="action">
+          {inviteCopied ? "Invite copied!" : "Invite"}
+        </button>
       </header>
       <div className="mx-auto grid max-w-7xl gap-5 px-5 pb-10 lg:grid-cols-[1.65fr_.85fr]">
         <section className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl">
