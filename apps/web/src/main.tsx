@@ -273,6 +273,7 @@ function App() {
   const [host, setHost] = useState(false);
   const [error, setError] = useState("");
   const [starting, setStarting] = useState(false);
+  const [inviteCopied, setInviteCopied] = useState(false);
   const join = async (create = false) => {
     setError("");
     const displayName = userName.trim();
@@ -429,6 +430,11 @@ function App() {
   if (!host)
     return <GuestRoom room={room} onAdded={refresh} userName={userName.trim()} />;
   const invite = `${location.origin}?room=${room.code}`;
+  const copyInvite = async () => {
+    await navigator.clipboard.writeText(invite);
+    setInviteCopied(true);
+    setTimeout(() => setInviteCopied(false), 2000);
+  };
   const openSearch = () => {
     document
       .getElementById("song-search")
@@ -453,7 +459,12 @@ function App() {
           </button>
           <div className="text-right">
             <p className="eyebrow">HOST: {userName.trim()}</p>
-            <b className="tracking-[.2em]">{room.code}</b>
+            <div className="flex items-center justify-end gap-2">
+              <b className="tracking-[.2em]">{room.code}</b>
+              <button onClick={copyInvite} className="ghost px-3 py-1 text-xs">
+                {inviteCopied ? "Copied!" : "Invite"}
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -491,10 +502,10 @@ function App() {
             {invite}
           </p>
           <button
-            onClick={() => navigator.clipboard.writeText(invite)}
+            onClick={copyInvite}
             className="action mt-3 w-full"
           >
-            Copy invite link
+            {inviteCopied ? "Invite link copied!" : "Copy invite link"}
           </button>
         </aside>
         <Queue room={room} host onSkip={skip} />
