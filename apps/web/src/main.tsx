@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import QRCode from "react-qr-code";
 import { io } from "socket.io-client";
 import type { QueueItem, Room, Video } from "@encore/types";
 import "./index.css";
@@ -628,8 +629,14 @@ function App() {
           <p className="mt-3 text-sm leading-6 text-white/55">
             Friends can add songs from their phone. Playback stays right here.
           </p>
-          <div className="my-5 grid h-32 w-32 place-items-center rounded-xl bg-white text-center text-xs font-bold text-ink [background-image:repeating-linear-gradient(90deg,transparent_0,transparent_7px,#100e1b_7px,#100e1b_10px),repeating-linear-gradient(0deg,transparent_0,transparent_7px,#100e1b_7px,#100e1b_10px)]">
-            <span className="rounded bg-lime p-2">E</span>
+          <div className="my-5 w-32 rounded-xl bg-white p-2 shadow-lg shadow-black/20">
+            <QRCode
+              value={invite}
+              size={112}
+              level="M"
+              title={`QR code for room ${room.code}`}
+              className="h-auto w-full"
+            />
           </div>
           <p className="break-all rounded-lg bg-black/20 p-3 font-mono text-[10px] text-white/55">
             {invite}
