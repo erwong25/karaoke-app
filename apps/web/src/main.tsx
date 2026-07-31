@@ -309,6 +309,13 @@ function GuestRoom({
   onAdded: () => void;
   userName: string;
 }) {
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const invite = `${location.origin}?room=${room.code}`;
+  const copyInvite = async () => {
+    await navigator.clipboard.writeText(invite);
+    setInviteCopied(true);
+    setTimeout(() => setInviteCopied(false), 2000);
+  };
   const openSearch = () => {
     document
       .getElementById("song-search")
@@ -330,7 +337,12 @@ function GuestRoom({
         <div className="text-right">
           <p className="eyebrow">YOU JOINED AS</p>
           <b className="block truncate text-sm">{userName}</b>
-          <b className="tracking-[.18em]">{room.code}</b>
+          <div className="mt-1 flex items-center justify-end gap-2">
+            <b className="tracking-[.18em]">{room.code}</b>
+            <button onClick={copyInvite} className="ghost px-3 py-1 text-xs">
+              {inviteCopied ? "Copied!" : "Invite"}
+            </button>
+          </div>
         </div>
       </header>
       <div className="mx-auto max-w-3xl space-y-5 px-5 pb-10">
