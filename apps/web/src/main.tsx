@@ -11,7 +11,7 @@ const codeFromUrl =
 const hostTokenKey = (code: string) => `encore:host:${code}`;
 const displayNameKey = "encore:display-name";
 const hostThemeKey = "encore:host-theme";
-type HostTheme = "default" | "light" | "y2k";
+type HostTheme = "default" | "light" | "y2k" | "futuristic";
 
 type YouTubePlayerInstance = {
   loadVideoById: (videoId: string) => void;
@@ -389,7 +389,7 @@ function App() {
   const [theme, setTheme] = useState<HostTheme>(
     () => {
       const savedTheme = localStorage.getItem(hostThemeKey);
-      return savedTheme === "light" || savedTheme === "y2k"
+      return savedTheme === "light" || savedTheme === "y2k" || savedTheme === "futuristic"
         ? savedTheme
         : "default";
     },
@@ -567,7 +567,7 @@ function App() {
   };
   return (
     <main
-      className={`min-h-screen bg-[radial-gradient(circle_at_80%_0%,#442958,transparent_30%),#100e1b] ${theme === "light" ? "theme-light" : theme === "y2k" ? "theme-y2k" : ""}`}
+      className={`min-h-screen bg-[radial-gradient(circle_at_80%_0%,#442958,transparent_30%),#100e1b] ${theme === "light" ? "theme-light" : theme === "y2k" ? "theme-y2k" : theme === "futuristic" ? "theme-futuristic" : ""}`}
     >
       <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-6">
         <div className="font-display text-2xl">
@@ -588,6 +588,7 @@ function App() {
               <option value="default">Default</option>
               <option value="light">Light</option>
               <option value="y2k">Y2K</option>
+              <option value="futuristic">Futuristic</option>
             </select>
           </label>
           <button onClick={copyInvite} className="action">
