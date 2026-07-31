@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { io } from "socket.io-client";
 import type { QueueItem, Room, Video } from "@encore/types";
@@ -11,7 +11,113 @@ const codeFromUrl =
 const hostTokenKey = (code: string) => `encore:host:${code}`;
 const displayNameKey = "encore:display-name";
 
-function YouTubePlayer({ videoId }: { videoId?: string }) {
+type YouTubePlayerInstance = {
+  loadVideoById: (videoId: string) => void;
+  destroy: () => void;
+};
+type YouTubeApi = {
+  Player: new (
+    element: HTMLElement,
+    options: {
+      videoId: string;
+      width: string;
+      height: string;
+      playerVars: Record<string, string | number>;
+      events: { onStateChange: (event: { data: number }) => void };
+    },
+  ) => YouTubePlayerInstance;
+};
+
+declare global {
+  interface Window {
+    YT?: YouTubeApi;
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
+let youtubeApiPromise: Promise<YouTubeApi> | undefined;
+function loadYouTubeApi() {
+  if (window.YT?.Player) return Promise.resolve(window.YT);
+  if (!youtubeApiPromise) {
+    youtubeApiPromise = new Promise((resolve, reject) => {
+      const previousReady = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        previousReady?.();
+        if (window.YT) resolve(window.YT);
+      };
+      const script = document.querySelector<HTMLScriptElement>(
+        'script[src="https://www.youtube.com/iframe_api"]',
+      );
+      if (script) {
+        script.addEventListener("error", () => reject(new Error("YouTube player failed to load")), {
+          once: true,
+        });
+      } else {
+        const apiScript = document.createElement("script");
+        apiScript.src = "https://www.youtube.com/iframe_api";
+        apiScript.onerror = () => reject(new Error("YouTube player failed to load"));
+        document.head.appendChild(apiScript);
+      }
+    });
+  }
+  return youtubeApiPromise;
+}
+
+function YouTubePlayer({
+  videoId,
+  onEnded,
+}: {
+  videoId?: string;
+  onEnded: () => void;
+}) {
+  const playerHost = useRef<HTMLDivElement>(null);
+  const player = useRef<YouTubePlayerInstance | null>(null);
+  const onEndedRef = useRef(onEnded);
+
+  useEffect(() => {
+    onEndedRef.current = onEnded;
+  }, [onEnded]);
+
+  useEffect(() => {
+    if (!videoId) {
+      player.current?.destroy();
+      player.current = null;
+      return;
+    }
+    let cancelled = false;
+    loadYouTubeApi()
+      .then((api) => {
+        if (cancelled || !playerHost.current) return;
+        if (player.current) {
+          player.current.loadVideoById(videoId);
+          return;
+        }
+        player.current = new api.Player(playerHost.current, {
+          videoId,
+          width: "100%",
+          height: "100%",
+          playerVars: { autoplay: 1, rel: 0, origin: location.origin },
+          events: {
+            onStateChange: (event) => {
+              if (event.data === 0) onEndedRef.current();
+            },
+          },
+        });
+      })
+      .catch((error) => console.error("[Encore] YouTube player failed to load", error));
+    return () => {
+      cancelled = true;
+    };
+  }, [videoId]);
+
+  useEffect(
+    () => () => {
+      player.current?.destroy();
+      player.current = null;
+    },
+    [],
+  );
+
   if (!videoId)
     return (
       <div className="grid h-full place-items-center bg-[radial-gradient(circle_at_50%_35%,#9c3f79,transparent_30%),#241831]">
@@ -23,15 +129,7 @@ function YouTubePlayer({ videoId }: { videoId?: string }) {
         </div>
       </div>
     );
-  return (
-    <iframe
-      className="h-full w-full"
-      title="Karaoke playback"
-      src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&enablejsapi=1`}
-      allow="autoplay; encrypted-media; picture-in-picture"
-      allowFullScreen
-    />
-  );
+  return <div ref={playerHost} className="h-full w-full" />;
 }
 
 function Queue({
@@ -274,6 +372,7 @@ function App() {
   const [error, setError] = useState("");
   const [starting, setStarting] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
+  const advancingSong = useRef(false);
   const join = async (create = false) => {
     setError("");
     const displayName = userName.trim();
@@ -347,15 +446,20 @@ function App() {
   }, []);
   const refresh = () => socket.emit("room:join", room?.code);
   const skip = async () => {
-    if (!room) return;
-    await fetch(`${API}/api/rooms/${room.code}/skip`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-host-token": localStorage.getItem(hostTokenKey(room.code)) || "",
-      },
-    });
-    refresh();
+    if (!room || advancingSong.current) return;
+    advancingSong.current = true;
+    try {
+      await fetch(`${API}/api/rooms/${room.code}/skip`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-host-token": localStorage.getItem(hostTokenKey(room.code)) || "",
+        },
+      });
+      refresh();
+    } finally {
+      advancingSong.current = false;
+    }
   };
   if (!room)
     return (
@@ -457,7 +561,7 @@ function App() {
       <div className="mx-auto grid max-w-7xl gap-5 px-5 pb-10 lg:grid-cols-[1.65fr_.85fr]">
         <section className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl">
           <div className="aspect-video">
-            <YouTubePlayer videoId={room.currentItem?.youtubeId} />
+            <YouTubePlayer videoId={room.currentItem?.youtubeId} onEnded={skip} />
           </div>
           <div className="flex items-center justify-between bg-[#211a2d] p-5">
             <div>
