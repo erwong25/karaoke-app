@@ -182,3 +182,51 @@
 .theme-futuristic input::placeholder {
   color: rgb(203 213 225 / 0.65);
 }
+
+.theme-underwater {
+  background:
+    radial-gradient(ellipse at 16% 4%, rgb(116 248 255 / 0.26), transparent 24%),
+    radial-gradient(ellipse at 78% 22%, rgb(35 145 255 / 0.26), transparent 30%),
+    radial-gradient(ellipse at 42% 110%, rgb(9 90 160 / 0.7), transparent 45%),
+    linear-gradient(180deg, #07375f 0%, #06244a 45%, #02142e 100%) !important;
+  color: #effeff;
+}
+
+.theme-underwater .panel {
+  border-color: rgb(126 242 255 / 0.42);
+  background: linear-gradient(145deg, rgb(18 120 161 / 0.46), rgb(3 39 87 / 0.8));
+  box-shadow: inset 0 1px 0 rgb(208 255 255 / 0.22), 0 20px 38px rgb(0 14 54 / 0.38);
+}
+
+.theme-underwater .eyebrow {
+  color: #91f7ff;
+  text-shadow: 0 0 12px rgb(42 217 255 / 0.48);
+}
+
+.theme-underwater .action {
+  border: 1px solid #c1fbff;
+  background: linear-gradient(135deg, #b6fffb, #46c8ef 52%, #1674d5);
+  box-shadow: inset 0 1px 0 #fff, 0 4px 12px rgb(4 100 210 / 0.42);
+  color: #052e5a;
+}
+
+.theme-underwater .ghost,
+.theme-underwater .theme-select {
+  border-color: rgb(144 243 255 / 0.52);
+  background: rgb(0 71 125 / 0.64);
+  color: #ecfeff;
+}
+
+.theme-underwater .ghost:hover {
+  background: rgb(6 113 168 / 0.78);
+}
+
+.theme-underwater input {
+  border-color: rgb(113 236 255 / 0.42);
+  background: rgb(1 46 93 / 0.66);
+  color: #effeff;
+}
+
+.theme-underwater input::placeholder {
+  color: rgb(197 248 255 / 0.58);
+}
