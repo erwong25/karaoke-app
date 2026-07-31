@@ -83,3 +83,49 @@
 .theme-light [class~="border-white/15"] {
   border-color: #d8dee9 !important;
 }
+
+.theme-y2k {
+  background:
+    radial-gradient(circle at 12% 12%, rgb(255 255 255 / 0.78) 0 2%, transparent 2.4%),
+    radial-gradient(circle at 78% 16%, #72e7ff 0 1%, transparent 22%),
+    radial-gradient(circle at 12% 88%, #ff89dc 0 1%, transparent 25%),
+    linear-gradient(135deg, #6b31d7 0%, #e24bb7 47%, #37cbe9 100%) !important;
+  color: #fff;
+}
+
+.theme-y2k .panel {
+  border: 2px solid rgb(255 255 255 / 0.75);
+  background: linear-gradient(135deg, rgb(255 255 255 / 0.35), rgb(120 47 222 / 0.48));
+  box-shadow: 0 0 0 2px rgb(255 84 209 / 0.42), 0 18px 35px rgb(38 8 97 / 0.38);
+  backdrop-filter: blur(14px);
+}
+
+.theme-y2k .eyebrow {
+  color: #fff5fe;
+  text-shadow: 1px 1px 0 #9537d7;
+}
+
+.theme-y2k .action {
+  border: 1px solid #fff;
+  background: linear-gradient(180deg, #fff6ff 0%, #ff91e1 46%, #c53eeb 100%);
+  box-shadow: inset 0 1px 0 #fff, 0 3px 0 #7d1fa2, 0 5px 12px rgb(73 12 126 / 0.45);
+  color: #381058;
+}
+
+.theme-y2k .ghost,
+.theme-y2k .theme-select {
+  border-color: rgb(255 255 255 / 0.85);
+  background: linear-gradient(135deg, rgb(112 224 255 / 0.56), rgb(247 122 220 / 0.55));
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.65);
+}
+
+.theme-y2k input {
+  border-color: rgb(255 255 255 / 0.8);
+  background: rgb(47 15 111 / 0.5);
+  color: #fff;
+}
+
+.theme-y2k input::placeholder {
+  color: rgb(255 255 255 / 0.65);
+}
