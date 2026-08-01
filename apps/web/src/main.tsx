@@ -140,12 +140,16 @@ function Queue({
   host,
   onSkip,
   onReorder,
+  onRemove,
 }: {
   room: Room;
   host: boolean;
   onSkip: () => void;
   onReorder?: (itemIds: string[]) => void;
+  onRemove?: (itemId: string) => void;
 }) {
+  const queueBox = useRef<HTMLElement>(null);
+  const touchStartX = useRef(new Map<string, number>());
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
   const reorder = (targetId: string) => {
@@ -158,8 +162,21 @@ function Queue({
     next.splice(to, 0, moved);
     onReorder(next.map((song) => song.id));
   };
+  const endDrag = (event: React.DragEvent<HTMLDivElement>) => {
+    const itemId = draggedId;
+    setDraggedId(null);
+    setDropTargetId(null);
+    if (!itemId || !onRemove) return;
+    const elementAtDrop = document.elementFromPoint(event.clientX, event.clientY);
+    if (!elementAtDrop || !queueBox.current?.contains(elementAtDrop)) onRemove(itemId);
+  };
+  const endSwipe = (songId: string, endX: number) => {
+    const startX = touchStartX.current.get(songId);
+    touchStartX.current.delete(songId);
+    if (startX !== undefined && Math.abs(endX - startX) >= 80) onRemove?.(songId);
+  };
   return (
-    <section className="panel p-5">
+    <section ref={queueBox} className="panel p-5">
       <div className="mb-4 flex items-end justify-between">
         <div>
           <p className="eyebrow">UP NEXT</p>
@@ -169,6 +186,11 @@ function Queue({
               {room.queue.length} songs
             </span>
           </h2>
+          {host && (
+            <p className="mt-1 text-[10px] text-white/45">
+              Drag to reorder or drop outside to remove. Swipe left or right on mobile.
+            </p>
+          )}
         </div>
         {host && (
           <button onClick={onSkip} className="ghost">
@@ -186,17 +208,21 @@ function Queue({
               draggable={host}
               dragging={draggedId === song.id}
               dropTarget={dropTargetId === song.id && draggedId !== song.id}
-              onDragStart={() => setDraggedId(song.id)}
-              onDragEnd={() => {
-                setDraggedId(null);
-                setDropTargetId(null);
+              onDragStart={(event) => {
+                event.dataTransfer.effectAllowed = "move";
+                setDraggedId(song.id);
               }}
+              onDragEnd={endDrag}
               onDragOver={(event) => {
                 if (!host || !draggedId) return;
                 event.preventDefault();
                 setDropTargetId(song.id);
               }}
               onDrop={() => reorder(song.id)}
+              onTouchStart={(event) => {
+                if (host) touchStartX.current.set(song.id, event.touches[0].clientX);
+              }}
+              onTouchEnd={(event) => endSwipe(song.id, event.changedTouches[0].clientX)}
             />
           ))
         ) : (
@@ -218,16 +244,20 @@ function QueueRow({
   onDragEnd,
   onDragOver,
   onDrop,
+  onTouchStart,
+  onTouchEnd,
 }: {
   song: QueueItem;
   position: number;
   draggable?: boolean;
   dragging?: boolean;
   dropTarget?: boolean;
-  onDragStart?: () => void;
-  onDragEnd?: () => void;
+  onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDragEnd?: (event: React.DragEvent<HTMLDivElement>) => void;
   onDragOver?: (event: React.DragEvent<HTMLDivElement>) => void;
   onDrop?: () => void;
+  onTouchStart?: (event: React.TouchEvent<HTMLDivElement>) => void;
+  onTouchEnd?: (event: React.TouchEvent<HTMLDivElement>) => void;
 }) {
   return (
     <div
@@ -236,7 +266,9 @@ function QueueRow({
       onDragEnd={onDragEnd}
       onDragOver={onDragOver}
       onDrop={onDrop}
-      className={`flex items-center gap-3 py-3 transition ${draggable ? "cursor-grab active:cursor-grabbing" : ""} ${dragging ? "opacity-40" : ""} ${dropTarget ? "border-t-2 border-lime" : ""}`}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      className={`flex touch-pan-y items-center gap-3 py-3 transition ${draggable ? "cursor-grab active:cursor-grabbing" : ""} ${dragging ? "opacity-40" : ""} ${dropTarget ? "border-t-2 border-lime" : ""}`}
     >
       <span className="w-5 text-xs text-white/30">
         {String(position).padStart(2, "0")}
@@ -577,6 +609,27 @@ function App() {
       refresh();
     }
   };
+  const removeFromQueue = async (itemId: string) => {
+    if (!room) return;
+    const roomCode = room.code;
+    setRoom((current) =>
+      current?.code === roomCode
+        ? { ...current, queue: current.queue.filter((song) => song.id !== itemId) }
+        : current,
+    );
+    try {
+      const response = await fetch(`${API}/api/rooms/${roomCode}/queue/${itemId}`, {
+        method: "DELETE",
+        headers: {
+          "x-host-token": localStorage.getItem(hostTokenKey(roomCode)) || "",
+        },
+      });
+      if (!response.ok) throw new Error("Could not remove queue item");
+    } catch (error) {
+      console.error("[Encore] Queue removal failed", error);
+      refresh();
+    }
+  };
   if (!room)
     return (
       <main className="grid min-h-screen place-items-center overflow-hidden bg-[radial-gradient(circle_at_80%_0%,#57377f,transparent_35%),radial-gradient(circle_at_10%_100%,#7e315c,transparent_35%)] p-5">
@@ -742,7 +795,13 @@ function App() {
           </button>
         </aside>
         <div className="min-w-0 lg:order-4">
-          <Queue room={room} host onSkip={skip} onReorder={reorderQueue} />
+          <Queue
+            room={room}
+            host
+            onSkip={skip}
+            onReorder={reorderQueue}
+            onRemove={removeFromQueue}
+          />
         </div>
         <div className="lg:order-3">
           <Search room={room} onAdded={refresh} userName={userName.trim()} />
