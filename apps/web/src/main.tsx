@@ -648,8 +648,12 @@ function App() {
             {inviteCopied ? "Invite link copied!" : "Copy invite link"}
           </button>
         </aside>
-        <Queue room={room} host onSkip={skip} />
-        <Search room={room} onAdded={refresh} userName={userName.trim()} />
+        <div className="lg:order-4">
+          <Queue room={room} host onSkip={skip} />
+        </div>
+        <div className="lg:order-3">
+          <Search room={room} onAdded={refresh} userName={userName.trim()} />
+        </div>
       </div>
     </main>
   );
