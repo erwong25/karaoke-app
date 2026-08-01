@@ -648,7 +648,7 @@ function App() {
             {inviteCopied ? "Invite link copied!" : "Copy invite link"}
           </button>
         </aside>
-        <div className="lg:order-4">
+        <div className="min-w-0 lg:order-4">
           <Queue room={room} host onSkip={skip} />
         </div>
         <div className="lg:order-3">
