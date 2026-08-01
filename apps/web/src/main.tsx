@@ -139,11 +139,25 @@ function Queue({
   room,
   host,
   onSkip,
+  onReorder,
 }: {
   room: Room;
   host: boolean;
   onSkip: () => void;
+  onReorder?: (itemIds: string[]) => void;
 }) {
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const reorder = (targetId: string) => {
+    if (!draggedId || draggedId === targetId || !onReorder) return;
+    const next = [...room.queue];
+    const from = next.findIndex((song) => song.id === draggedId);
+    const to = next.findIndex((song) => song.id === targetId);
+    if (from < 0 || to < 0) return;
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    onReorder(next.map((song) => song.id));
+  };
   return (
     <section className="panel p-5">
       <div className="mb-4 flex items-end justify-between">
@@ -165,7 +179,25 @@ function Queue({
       <div className="divide-y divide-white/5">
         {room.queue.length ? (
           room.queue.map((song, i) => (
-            <QueueRow key={song.id} song={song} position={i + 1} />
+            <QueueRow
+              key={song.id}
+              song={song}
+              position={i + 1}
+              draggable={host}
+              dragging={draggedId === song.id}
+              dropTarget={dropTargetId === song.id && draggedId !== song.id}
+              onDragStart={() => setDraggedId(song.id)}
+              onDragEnd={() => {
+                setDraggedId(null);
+                setDropTargetId(null);
+              }}
+              onDragOver={(event) => {
+                if (!host || !draggedId) return;
+                event.preventDefault();
+                setDropTargetId(song.id);
+              }}
+              onDrop={() => reorder(song.id)}
+            />
           ))
         ) : (
           <p className="py-8 text-center text-sm text-white/45">
@@ -176,12 +208,44 @@ function Queue({
     </section>
   );
 }
-function QueueRow({ song, position }: { song: QueueItem; position: number }) {
+function QueueRow({
+  song,
+  position,
+  draggable = false,
+  dragging = false,
+  dropTarget = false,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDrop,
+}: {
+  song: QueueItem;
+  position: number;
+  draggable?: boolean;
+  dragging?: boolean;
+  dropTarget?: boolean;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
+  onDragOver?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDrop?: () => void;
+}) {
   return (
-    <div className="flex items-center gap-3 py-3">
+    <div
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      className={`flex items-center gap-3 py-3 transition ${draggable ? "cursor-grab active:cursor-grabbing" : ""} ${dragging ? "opacity-40" : ""} ${dropTarget ? "border-t-2 border-lime" : ""}`}
+    >
       <span className="w-5 text-xs text-white/30">
         {String(position).padStart(2, "0")}
       </span>
+      {draggable && (
+        <span className="text-xs tracking-[-.12em] text-white/35" aria-hidden="true">
+          ⠿
+        </span>
+      )}
       <img
         className="h-10 w-14 rounded object-cover"
         src={song.thumbnailUrl}
@@ -484,6 +548,35 @@ function App() {
       advancingSong.current = false;
     }
   };
+  const reorderQueue = async (itemIds: string[]) => {
+    if (!room) return;
+    const roomCode = room.code;
+    setRoom((current) => {
+      if (!current || current.code !== roomCode) return current;
+      const songsById = new Map(current.queue.map((song) => [song.id, song]));
+      return {
+        ...current,
+        queue: itemIds.map((id, index) => ({
+          ...songsById.get(id)!,
+          position: index + 1,
+        })),
+      };
+    });
+    try {
+      const response = await fetch(`${API}/api/rooms/${roomCode}/queue/order`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "x-host-token": localStorage.getItem(hostTokenKey(roomCode)) || "",
+        },
+        body: JSON.stringify({ itemIds }),
+      });
+      if (!response.ok) throw new Error("Could not save queue order");
+    } catch (error) {
+      console.error("[Encore] Queue reorder failed", error);
+      refresh();
+    }
+  };
   if (!room)
     return (
       <main className="grid min-h-screen place-items-center overflow-hidden bg-[radial-gradient(circle_at_80%_0%,#57377f,transparent_35%),radial-gradient(circle_at_10%_100%,#7e315c,transparent_35%)] p-5">
@@ -649,7 +742,7 @@ function App() {
           </button>
         </aside>
         <div className="min-w-0 lg:order-4">
-          <Queue room={room} host onSkip={skip} />
+          <Queue room={room} host onSkip={skip} onReorder={reorderQueue} />
         </div>
         <div className="lg:order-3">
           <Search room={room} onAdded={refresh} userName={userName.trim()} />
