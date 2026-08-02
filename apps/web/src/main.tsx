@@ -563,6 +563,13 @@ function App() {
   useEffect(() => {
     if (codeFromUrl) join(false);
   }, []);
+  useEffect(() => {
+    if (!room) return;
+    const keepRoomActive = () => socket.emit("room:activity", room.code);
+    keepRoomActive();
+    const heartbeat = window.setInterval(keepRoomActive, 5 * 60 * 1000);
+    return () => window.clearInterval(heartbeat);
+  }, [room?.code]);
   const refresh = () => socket.emit("room:join", room?.code);
   const skip = async () => {
     if (!room || advancingSong.current) return;

@@ -21,3 +21,7 @@ A shared karaoke room: the host controls YouTube playback while guests join with
 Deploy `apps/web` to Vercel (framework preset: Vite) and set `VITE_API_URL` to the API URL. The Express + Socket.IO service needs a persistent Node host (Railway, Render, Fly.io, or a container service); Vercel Functions do not keep WebSocket connections alive. Use a managed Postgres database and configure `CLIENT_ORIGIN` to the Vercel deployment URL.
 
 The web player intentionally exists only in Host mode. Guests submit queue requests over the API and receive room updates by Socket.IO.
+
+## Room expiration migration
+
+Rooms are deleted after 24 hours total or two hours without activity. For an existing database, apply [001_room_expiration.sql](apps/api/src/db/migrations/001_room_expiration.sql) once before deploying the API change. New databases receive the column from [schema.sql](apps/api/src/db/schema.sql).
