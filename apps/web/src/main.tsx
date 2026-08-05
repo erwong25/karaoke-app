@@ -13,6 +13,8 @@ const hostTokenKey = (code: string) => `encore:host:${code}`;
 const displayNameKey = "encore:display-name";
 const hostThemeKey = "encore:host-theme";
 type HostTheme = "default" | "light" | "y2k" | "futuristic" | "underwater";
+const displaySongTitle = (title: string, maxLength = 70) =>
+  title.length > maxLength ? `${title.slice(0, maxLength - 1)}…` : title;
 
 type YouTubePlayerInstance = {
   loadVideoById: (videoId: string) => void;
@@ -284,7 +286,7 @@ function QueueRow({
         alt=""
       />
       <div className="min-w-0 flex-1">
-        <b className="block truncate text-sm">{song.title}</b>
+        <b className="block truncate text-sm">{displaySongTitle(song.title)}</b>
         <span className="block truncate text-xs text-white/45">
           Added by {song.addedBy}
         </span>
@@ -377,19 +379,21 @@ function Search({
       {message && <p className="mt-3 text-sm text-white/55">{message}</p>}
       <div className="mt-3 divide-y divide-white/5">
         {items.map((video) => (
-          <div className="flex items-center gap-3 py-3" key={video.youtubeId}>
+          <div className="flex min-w-0 items-center gap-3 py-3" key={video.youtubeId}>
             <img
               className="h-10 w-14 rounded object-cover"
               src={video.thumbnailUrl}
               alt=""
             />
             <div className="min-w-0 flex-1">
-              <b className="block truncate text-sm">{video.title}</b>
+              <b className="block truncate text-sm">
+                {displaySongTitle(video.title)}
+              </b>
               <span className="block truncate text-xs text-white/45">
                 {video.channelTitle}
               </span>
             </div>
-            <button onClick={() => add(video)} className="action">
+            <button onClick={() => add(video)} className="action shrink-0">
               + Add
             </button>
           </div>
@@ -449,7 +453,9 @@ function GuestRoom({
           <div className="bg-[radial-gradient(circle_at_25%_10%,#75406d,transparent_40%),#241b30] p-6">
             <p className="eyebrow">NOW SINGING ON THE TV</p>
             <h1 className="mt-2 break-words font-display text-3xl">
-              {room.currentItem?.title || "The stage is waiting"}
+              {room.currentItem
+                ? displaySongTitle(room.currentItem.title)
+                : "The stage is waiting"}
             </h1>
             <p className="mt-2 break-words text-sm text-white/55">
               {room.currentItem?.channelTitle ||
@@ -764,7 +770,9 @@ function App() {
             <div className="min-w-0">
               <p className="eyebrow">NOW SINGING</p>
               <h1 className="break-words font-display text-xl">
-                {room.currentItem?.title || "Waiting for the first singer"}
+                {room.currentItem
+                  ? displaySongTitle(room.currentItem.title)
+                  : "Waiting for the first singer"}
               </h1>
               <p className="mt-1 break-words text-xs text-white/45">
                 {room.currentItem?.channelTitle ||
