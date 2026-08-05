@@ -3,6 +3,13 @@
 @tailwind utilities;
 
 @layer base {
+  html,
+  body,
+  #root {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
   body {
     @apply min-h-screen bg-ink font-sans text-white antialiased;
   }
@@ -11,6 +18,12 @@
   input,
   select {
     @apply font-sans;
+  }
+
+  img,
+  iframe,
+  svg {
+    max-width: 100%;
   }
 }
 

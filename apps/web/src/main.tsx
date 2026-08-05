@@ -177,8 +177,8 @@ function Queue({
   };
   return (
     <section ref={queueBox} className="panel p-5">
-      <div className="mb-4 flex items-end justify-between">
-        <div>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
           <p className="eyebrow">UP NEXT</p>
           <h2 className="font-display text-2xl">
             Party queue{" "}
@@ -193,7 +193,7 @@ function Queue({
           )}
         </div>
         {host && (
-          <button onClick={onSkip} className="ghost">
+          <button onClick={onSkip} className="ghost shrink-0">
             Skip song
           </button>
         )}
@@ -426,17 +426,17 @@ function GuestRoom({
   };
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_85%_0%,#442958,transparent_30%),#100e1b]">
-      <header className="mx-auto flex max-w-3xl items-center justify-between px-5 py-6">
-        <div className="font-display text-2xl">
+      <header className="mx-auto flex max-w-3xl items-start justify-between gap-3 px-5 py-6">
+        <div className="shrink-0 font-display text-2xl">
           <span className="mr-2 rounded bg-lime px-2 py-1 font-sans text-sm text-ink">
             E
           </span>
           encore
         </div>
-        <div className="text-right">
+        <div className="min-w-0 flex-1 text-right">
           <p className="eyebrow">YOU JOINED AS</p>
           <b className="block truncate text-sm">{userName}</b>
-          <div className="mt-1 flex items-center justify-end gap-2">
+          <div className="mt-1 flex flex-wrap items-center justify-end gap-2">
             <b className="tracking-[.18em]">{room.code}</b>
             <button onClick={copyInvite} className="ghost px-3 py-1 text-xs">
               {inviteCopied ? "Copied!" : "Invite"}
@@ -448,16 +448,16 @@ function GuestRoom({
         <section className="panel overflow-hidden">
           <div className="bg-[radial-gradient(circle_at_25%_10%,#75406d,transparent_40%),#241b30] p-6">
             <p className="eyebrow">NOW SINGING ON THE TV</p>
-            <h1 className="mt-2 font-display text-3xl">
+            <h1 className="mt-2 break-words font-display text-3xl">
               {room.currentItem?.title || "The stage is waiting"}
             </h1>
-            <p className="mt-2 text-sm text-white/55">
+            <p className="mt-2 break-words text-sm text-white/55">
               {room.currentItem?.channelTitle ||
                 "Add the first song to get the party started."}
             </p>
           </div>
-          <div className="flex items-center justify-between border-t border-white/10 px-6 py-4">
-            <span className="text-xs text-white/50">
+          <div className="flex flex-col gap-3 border-t border-white/10 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <span className="min-w-0 text-xs text-white/50">
               You control the queue, not playback.
             </span>
             <button onClick={openSearch} className="action">
@@ -723,14 +723,14 @@ function App() {
     <main
       className={`min-h-screen bg-[radial-gradient(circle_at_80%_0%,#442958,transparent_30%),#100e1b] ${theme === "light" ? "theme-light" : theme === "y2k" ? "theme-y2k" : theme === "futuristic" ? "theme-futuristic" : theme === "underwater" ? "theme-underwater" : ""}`}
     >
-      <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-6">
-        <div className="font-display text-2xl">
+      <header className="mx-auto flex max-w-7xl items-start justify-between gap-3 px-5 py-6">
+        <div className="shrink-0 font-display text-2xl">
           <span className="mr-2 rounded bg-lime px-2 py-1 font-sans text-sm text-ink">
             E
           </span>
           encore
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2">
           <label className="text-right">
             <span className="eyebrow block">THEME</span>
             <select
@@ -749,8 +749,8 @@ function App() {
           <button onClick={copyInvite} className="action">
             {inviteCopied ? "Invite copied!" : "Invite"}
           </button>
-          <div className="text-right">
-            <p className="eyebrow">HOST: {userName.trim()}</p>
+          <div className="min-w-0 text-right">
+            <p className="eyebrow truncate">HOST: {userName.trim()}</p>
             <b className="tracking-[.2em]">{room.code}</b>
           </div>
         </div>
@@ -760,18 +760,18 @@ function App() {
           <div className="aspect-video">
             <YouTubePlayer videoId={room.currentItem?.youtubeId} onEnded={skip} />
           </div>
-          <div className="flex items-center justify-between bg-[#211a2d] p-5">
-            <div>
+          <div className="flex flex-col gap-3 bg-[#211a2d] p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
               <p className="eyebrow">NOW SINGING</p>
-              <h1 className="font-display text-xl">
+              <h1 className="break-words font-display text-xl">
                 {room.currentItem?.title || "Waiting for the first singer"}
               </h1>
-              <p className="mt-1 text-xs text-white/45">
+              <p className="mt-1 break-words text-xs text-white/45">
                 {room.currentItem?.channelTitle ||
                   "Search YouTube karaoke videos to begin"}
               </p>
             </div>
-            <button onClick={skip} className="action">
+            <button onClick={skip} className="action self-start sm:self-auto">
               {room.currentItem ? "Skip song →" : "Start song →"}
             </button>
           </div>
