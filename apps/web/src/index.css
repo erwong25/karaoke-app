@@ -10,6 +10,15 @@
     overflow-x: hidden;
   }
 
+  #root > *,
+  #root * {
+    max-width: 100%;
+  }
+
+  #root :is(h1, h2, h3, p, b, span) {
+    overflow-wrap: anywhere;
+  }
+
   body {
     @apply min-h-screen bg-ink font-sans text-white antialiased;
   }
