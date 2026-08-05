@@ -178,7 +178,7 @@ function Queue({
     if (startX !== undefined && Math.abs(endX - startX) >= 80) onRemove?.(songId);
   };
   return (
-    <section ref={queueBox} className="panel p-5">
+    <section ref={queueBox} data-layout-section="Party queue" className="panel p-5">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="eyebrow">UP NEXT</p>
@@ -354,7 +354,11 @@ function Search({
     onAdded();
   }
   return (
-    <section id="song-search" className="panel scroll-mt-5 p-5">
+    <section
+      id="song-search"
+      data-layout-section="Song search"
+      className="panel scroll-mt-5 p-5"
+    >
       <div className="mb-4 flex items-end justify-between">
         <div>
           <p className="eyebrow">YOUTUBE KARAOKE</p>
@@ -430,7 +434,10 @@ function GuestRoom({
   };
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_85%_0%,#442958,transparent_30%),#100e1b]">
-      <header className="mx-auto flex max-w-3xl items-start justify-between gap-3 px-5 py-6">
+      <header
+        data-layout-section="Guest header"
+        className="mx-auto flex max-w-3xl items-start justify-between gap-3 px-5 py-6"
+      >
         <div className="shrink-0 font-display text-2xl">
           <span className="mr-2 rounded bg-lime px-2 py-1 font-sans text-sm text-ink">
             E
@@ -449,7 +456,7 @@ function GuestRoom({
         </div>
       </header>
       <div className="mx-auto max-w-3xl space-y-5 px-5 pb-10">
-        <section className="panel overflow-hidden">
+        <section data-layout-section="Guest now singing" className="panel overflow-hidden">
           <div className="bg-[radial-gradient(circle_at_25%_10%,#75406d,transparent_40%),#241b30] p-6">
             <p className="eyebrow">NOW SINGING ON THE TV</p>
             <h1 className="mt-2 break-words font-display text-3xl">
@@ -570,6 +577,57 @@ function App() {
     if (codeFromUrl) join(false);
   }, []);
   useEffect(() => {
+    const root = document.getElementById("root");
+    if (!root || !window.ResizeObserver) return;
+    const overflowing = new Set<HTMLElement>();
+    let frame: number | undefined;
+    const checkLayout = () => {
+      frame = undefined;
+      const viewportWidth = document.documentElement.clientWidth;
+      const pageOverflows = document.documentElement.scrollWidth > viewportWidth + 1;
+      for (const section of root.querySelectorAll<HTMLElement>("[data-layout-section]")) {
+        const bounds = section.getBoundingClientRect();
+        const sectionOverflows =
+          section.scrollWidth > section.clientWidth + 1 ||
+          bounds.left < -1 ||
+          bounds.right > viewportWidth + 1;
+        if (pageOverflows && sectionOverflows && !overflowing.has(section)) {
+          overflowing.add(section);
+          console.log("[Encore] Layout width overflow detected", {
+            section: section.dataset.layoutSection,
+            viewportWidth,
+            pageScrollWidth: document.documentElement.scrollWidth,
+            sectionClientWidth: section.clientWidth,
+            sectionScrollWidth: section.scrollWidth,
+            sectionBounds: { left: bounds.left, right: bounds.right, width: bounds.width },
+          });
+        } else if (!sectionOverflows) {
+          overflowing.delete(section);
+        }
+      }
+    };
+    const scheduleCheck = () => {
+      if (frame === undefined) frame = window.requestAnimationFrame(checkLayout);
+    };
+    const resizeObserver = new ResizeObserver(scheduleCheck);
+    const observeSections = () => {
+      root
+        .querySelectorAll<HTMLElement>("[data-layout-section]")
+        .forEach((section) => resizeObserver.observe(section));
+      scheduleCheck();
+    };
+    const mutationObserver = new MutationObserver(observeSections);
+    mutationObserver.observe(root, { childList: true, subtree: true });
+    observeSections();
+    window.addEventListener("resize", scheduleCheck);
+    return () => {
+      if (frame !== undefined) window.cancelAnimationFrame(frame);
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+      window.removeEventListener("resize", scheduleCheck);
+    };
+  }, []);
+  useEffect(() => {
     if (!room) return;
     const keepRoomActive = () => socket.emit("room:activity", room.code);
     keepRoomActive();
@@ -646,7 +704,7 @@ function App() {
   if (!room)
     return (
       <main className="grid min-h-screen place-items-center overflow-hidden bg-[radial-gradient(circle_at_80%_0%,#57377f,transparent_35%),radial-gradient(circle_at_10%_100%,#7e315c,transparent_35%)] p-5">
-        <div className="panel w-full max-w-md p-8">
+        <div data-layout-section="Welcome form" className="panel w-full max-w-md p-8">
           <div className="mb-8 flex items-center gap-2 font-display text-3xl">
             <span className="grid h-9 w-9 place-items-center rounded-lg bg-lime font-sans text-lg text-ink">
               E
@@ -729,7 +787,10 @@ function App() {
     <main
       className={`min-h-screen bg-[radial-gradient(circle_at_80%_0%,#442958,transparent_30%),#100e1b] ${theme === "light" ? "theme-light" : theme === "y2k" ? "theme-y2k" : theme === "futuristic" ? "theme-futuristic" : theme === "underwater" ? "theme-underwater" : ""}`}
     >
-      <header className="mx-auto flex max-w-7xl items-start justify-between gap-3 px-5 py-6">
+      <header
+        data-layout-section="Host header"
+        className="mx-auto flex max-w-7xl items-start justify-between gap-3 px-5 py-6"
+      >
         <div className="shrink-0 font-display text-2xl">
           <span className="mr-2 rounded bg-lime px-2 py-1 font-sans text-sm text-ink">
             E
@@ -762,7 +823,10 @@ function App() {
         </div>
       </header>
       <div className="mx-auto grid max-w-7xl gap-5 px-5 pb-10 lg:grid-cols-[1.65fr_.85fr]">
-        <section className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl">
+        <section
+          data-layout-section="YouTube player"
+          className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl"
+        >
           <div className="aspect-video">
             <YouTubePlayer videoId={room.currentItem?.youtubeId} onEnded={skip} />
           </div>
@@ -784,7 +848,7 @@ function App() {
             </button>
           </div>
         </section>
-        <aside className="panel p-6">
+        <aside data-layout-section="Invite panel" className="panel p-6">
           <p className="eyebrow">INVITE THE CREW</p>
           <h2 className="mt-1 font-display text-3xl">Pass the mic around.</h2>
           <p className="mt-3 text-sm leading-6 text-white/55">
