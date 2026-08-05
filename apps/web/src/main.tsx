@@ -390,16 +390,17 @@ function Search({
       {message && <p className="mt-3 text-sm text-white/55">{message}</p>}
       <div className="mt-3 divide-y divide-white/5">
         {items.map((video) => (
-          <div className="flex min-w-0 items-center gap-3 py-3" key={video.youtubeId}>
+          <div
+            className="grid min-w-0 grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-3 py-3 sm:flex"
+            key={video.youtubeId}
+          >
             <img
               className="h-10 w-14 rounded object-cover"
               src={video.thumbnailUrl}
               alt=""
             />
-            <div className="min-w-0 flex-1">
-              <b className="block truncate text-sm">
-                <ResponsiveSongTitle title={video.title} />
-              </b>
+            <div className="min-w-0 max-w-full sm:flex-1">
+              <b className="block truncate text-sm">{video.title}</b>
               <span className="block truncate text-xs text-white/45">
                 {video.channelTitle}
               </span>
