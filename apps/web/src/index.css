@@ -3,21 +3,6 @@
 @tailwind utilities;
 
 @layer base {
-  html,
-  body,
-  #root {
-    max-width: 100%;
-  }
-
-  #root > *,
-  #root * {
-    max-width: 100%;
-  }
-
-  #root :is(h1, h2, h3, p, b, span) {
-    overflow-wrap: anywhere;
-  }
-
   body {
     @apply min-h-screen bg-ink font-sans text-white antialiased;
   }
@@ -26,6 +11,21 @@
   input,
   select {
     @apply font-sans;
+  }
+
+}
+
+@media (max-width: 639px) {
+  html,
+  body,
+  #root,
+  #root > *,
+  #root * {
+    max-width: 100%;
+  }
+
+  #root :is(h1, h2, h3, p, b, span) {
+    overflow-wrap: anywhere;
   }
 
   img,

@@ -16,6 +16,15 @@ type HostTheme = "default" | "light" | "y2k" | "futuristic" | "underwater";
 const displaySongTitle = (title: string, maxLength = 70) =>
   title.length > maxLength ? `${title.slice(0, maxLength - 1)}…` : title;
 
+function ResponsiveSongTitle({ title }: { title: string }) {
+  return (
+    <>
+      <span className="sm:hidden">{displaySongTitle(title)}</span>
+      <span className="hidden sm:inline">{title}</span>
+    </>
+  );
+}
+
 type YouTubePlayerInstance = {
   loadVideoById: (videoId: string) => void;
   destroy: () => void;
@@ -286,7 +295,9 @@ function QueueRow({
         alt=""
       />
       <div className="min-w-0 flex-1">
-        <b className="block truncate text-sm">{displaySongTitle(song.title)}</b>
+        <b className="block truncate text-sm">
+          <ResponsiveSongTitle title={song.title} />
+        </b>
         <span className="block truncate text-xs text-white/45">
           Added by {song.addedBy}
         </span>
@@ -387,7 +398,7 @@ function Search({
             />
             <div className="min-w-0 flex-1">
               <b className="block truncate text-sm">
-                {displaySongTitle(video.title)}
+                <ResponsiveSongTitle title={video.title} />
               </b>
               <span className="block truncate text-xs text-white/45">
                 {video.channelTitle}
@@ -430,7 +441,7 @@ function GuestRoom({
   };
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_85%_0%,#442958,transparent_30%),#100e1b]">
-      <header className="mx-auto flex max-w-3xl items-start justify-between gap-3 px-5 py-6">
+      <header className="mx-auto flex max-w-3xl items-start justify-between gap-3 px-5 py-6 sm:items-center sm:gap-0">
         <div className="shrink-0 font-display text-2xl">
           <span className="mr-2 rounded bg-lime px-2 py-1 font-sans text-sm text-ink">
             E
@@ -452,17 +463,17 @@ function GuestRoom({
         <section className="panel overflow-hidden">
           <div className="bg-[radial-gradient(circle_at_25%_10%,#75406d,transparent_40%),#241b30] p-6">
             <p className="eyebrow">NOW SINGING ON THE TV</p>
-            <h1 className="mt-2 break-words font-display text-3xl">
+            <h1 className="mt-2 break-words font-display text-3xl sm:break-normal">
               {room.currentItem
-                ? displaySongTitle(room.currentItem.title)
+                ? <ResponsiveSongTitle title={room.currentItem.title} />
                 : "The stage is waiting"}
             </h1>
-            <p className="mt-2 break-words text-sm text-white/55">
+            <p className="mt-2 break-words text-sm text-white/55 sm:break-normal">
               {room.currentItem?.channelTitle ||
                 "Add the first song to get the party started."}
             </p>
           </div>
-          <div className="flex flex-col gap-3 border-t border-white/10 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 border-t border-white/10 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
             <span className="min-w-0 text-xs text-white/50">
               You control the queue, not playback.
             </span>
@@ -729,14 +740,14 @@ function App() {
     <main
       className={`min-h-screen bg-[radial-gradient(circle_at_80%_0%,#442958,transparent_30%),#100e1b] ${theme === "light" ? "theme-light" : theme === "y2k" ? "theme-y2k" : theme === "futuristic" ? "theme-futuristic" : theme === "underwater" ? "theme-underwater" : ""}`}
     >
-      <header className="mx-auto flex max-w-7xl items-start justify-between gap-3 px-5 py-6">
+      <header className="mx-auto flex max-w-7xl items-start justify-between gap-3 px-5 py-6 sm:items-center sm:gap-0">
         <div className="shrink-0 font-display text-2xl">
           <span className="mr-2 rounded bg-lime px-2 py-1 font-sans text-sm text-ink">
             E
           </span>
           encore
         </div>
-        <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 sm:flex-none sm:flex-nowrap sm:gap-4">
           <label className="text-right">
             <span className="eyebrow block">THEME</span>
             <select
@@ -766,15 +777,15 @@ function App() {
           <div className="aspect-video">
             <YouTubePlayer videoId={room.currentItem?.youtubeId} onEnded={skip} />
           </div>
-          <div className="flex flex-col gap-3 bg-[#211a2d] p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 bg-[#211a2d] p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
             <div className="min-w-0">
               <p className="eyebrow">NOW SINGING</p>
-              <h1 className="break-words font-display text-xl">
+              <h1 className="break-words font-display text-xl sm:break-normal">
                 {room.currentItem
-                  ? displaySongTitle(room.currentItem.title)
+                  ? <ResponsiveSongTitle title={room.currentItem.title} />
                   : "Waiting for the first singer"}
               </h1>
-              <p className="mt-1 break-words text-xs text-white/45">
+              <p className="mt-1 break-words text-xs text-white/45 sm:break-normal">
                 {room.currentItem?.channelTitle ||
                   "Search YouTube karaoke videos to begin"}
               </p>
@@ -818,7 +829,7 @@ function App() {
             onRemove={removeFromQueue}
           />
         </div>
-        <div className="min-w-0 lg:order-3">
+        <div className="lg:order-3">
           <Search room={room} onAdded={refresh} userName={userName.trim()} />
         </div>
       </div>
