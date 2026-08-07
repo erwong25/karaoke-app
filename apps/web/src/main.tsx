@@ -501,6 +501,7 @@ function App() {
   const [error, setError] = useState("");
   const [starting, setStarting] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [mobileMessage, setMobileMessage] = useState("");
   const [theme, setTheme] = useState<HostTheme>(
     () => {
       const savedTheme = localStorage.getItem(hostThemeKey);
@@ -510,6 +511,7 @@ function App() {
     },
   );
   const advancingSong = useRef(false);
+  const mobileMessageTimer = useRef<number | undefined>(undefined);
   const join = async (create = false) => {
     setError("");
     const displayName = userName.trim();
@@ -737,6 +739,11 @@ function App() {
     setTheme(nextTheme);
     localStorage.setItem(hostThemeKey, nextTheme);
   };
+  const showMobileMessage = (label: string) => {
+    setMobileMessage(`${label} button pressed`);
+    if (mobileMessageTimer.current) window.clearTimeout(mobileMessageTimer.current);
+    mobileMessageTimer.current = window.setTimeout(() => setMobileMessage(""), 1600);
+  };
   return (
     <main
       className={`min-h-screen bg-[radial-gradient(circle_at_80%_0%,#442958,transparent_30%),#100e1b] ${theme === "light" ? "theme-light" : theme === "y2k" ? "theme-y2k" : theme === "futuristic" ? "theme-futuristic" : theme === "underwater" ? "theme-underwater" : ""}`}
@@ -773,7 +780,7 @@ function App() {
           </div>
         </div>
       </header>
-      <div className="mx-auto grid max-w-7xl gap-5 px-5 pb-10 lg:grid-cols-[1.65fr_.85fr]">
+      <div className="mx-auto grid max-w-7xl gap-5 px-5 pb-24 sm:pb-10 lg:grid-cols-[1.65fr_.85fr]">
         <section className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl">
           <div className="aspect-video">
             <YouTubePlayer videoId={room.currentItem?.youtubeId} onEnded={skip} />
@@ -834,6 +841,34 @@ function App() {
           <Search room={room} onAdded={refresh} userName={userName.trim()} />
         </div>
       </div>
+      {mobileMessage && (
+        <p
+          role="status"
+          className="fixed inset-x-4 bottom-20 z-50 rounded-lg bg-black/85 px-4 py-3 text-center text-sm font-semibold text-white shadow-xl sm:hidden"
+        >
+          {mobileMessage}
+        </p>
+      )}
+      <nav
+        aria-label="Mobile host navigation"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-white/15 bg-[#181226]/95 px-2 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur sm:hidden"
+      >
+        {[
+          "Player",
+          "Search",
+          "Queue",
+          "Invite",
+        ].map((label) => (
+          <button
+            key={label}
+            type="button"
+            onClick={() => showMobileMessage(label)}
+            className="rounded-lg px-2 py-2 text-xs font-bold text-white/75 transition active:bg-white/15"
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
     </main>
   );
 }
