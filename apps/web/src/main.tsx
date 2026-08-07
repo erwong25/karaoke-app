@@ -501,6 +501,7 @@ function App() {
   const [error, setError] = useState("");
   const [starting, setStarting] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [mobileMessage, setMobileMessage] = useState("");
   const [theme, setTheme] = useState<HostTheme>(
     () => {
@@ -512,6 +513,7 @@ function App() {
   );
   const advancingSong = useRef(false);
   const mobileMessageTimer = useRef<number | undefined>(undefined);
+  const inviteTouchStartY = useRef<number | undefined>(undefined);
   const join = async (create = false) => {
     setError("");
     const displayName = userName.trim();
@@ -590,6 +592,14 @@ function App() {
     const heartbeat = window.setInterval(keepRoomActive, 5 * 60 * 1000);
     return () => window.clearInterval(heartbeat);
   }, [room?.code]);
+  useEffect(() => {
+    if (!inviteOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setInviteOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [inviteOpen]);
   const refresh = () => socket.emit("room:join", room?.code);
   const skip = async () => {
     if (!room || advancingSong.current) return;
@@ -771,8 +781,8 @@ function App() {
               <option value="underwater">Underwater</option>
             </select>
           </label>
-          <button onClick={copyInvite} className="action">
-            {inviteCopied ? "Invite copied!" : "Invite"}
+          <button onClick={() => setInviteOpen(true)} className="action">
+            Invite
           </button>
           <div className="min-w-0 text-right">
             <p className="eyebrow truncate">HOST: {userName.trim()}</p>
@@ -781,7 +791,7 @@ function App() {
         </div>
       </header>
       <div className="mx-auto grid max-w-7xl gap-5 px-5 pb-24 sm:pb-10 lg:grid-cols-[1.65fr_.85fr]">
-        <section className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl">
+        <section className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl lg:row-span-2">
           <div className="aspect-video">
             <YouTubePlayer videoId={room.currentItem?.youtubeId} onEnded={skip} />
           </div>
@@ -803,31 +813,6 @@ function App() {
             </button>
           </div>
         </section>
-        <aside className="panel p-6">
-          <p className="eyebrow">INVITE THE CREW</p>
-          <h2 className="mt-1 font-display text-3xl">Pass the mic around.</h2>
-          <p className="mt-3 text-sm leading-6 text-white/55">
-            Friends can add songs from their phone. Playback stays right here.
-          </p>
-          <div className="my-5 w-32 rounded-xl bg-white p-2 shadow-lg shadow-black/20">
-            <QRCode
-              value={invite}
-              size={112}
-              level="M"
-              title={`QR code for room ${room.code}`}
-              className="h-auto w-full"
-            />
-          </div>
-          <p className="break-all rounded-lg bg-black/20 p-3 font-mono text-[10px] text-white/55">
-            {invite}
-          </p>
-          <button
-            onClick={copyInvite}
-            className="action mt-3 w-full"
-          >
-            {inviteCopied ? "Invite link copied!" : "Copy invite link"}
-          </button>
-        </aside>
         <div className="min-w-0 lg:order-4">
           <Queue
             room={room}
@@ -849,6 +834,65 @@ function App() {
           {mobileMessage}
         </p>
       )}
+      {inviteOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-end bg-black/60 sm:items-center sm:justify-center sm:p-5"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setInviteOpen(false);
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="invite-title"
+            onTouchStart={(event) => {
+              inviteTouchStartY.current = event.touches[0].clientY;
+            }}
+            onTouchEnd={(event) => {
+              const startY = inviteTouchStartY.current;
+              inviteTouchStartY.current = undefined;
+              if (startY !== undefined && event.changedTouches[0].clientY - startY >= 80)
+                setInviteOpen(false);
+            }}
+            className="panel w-full rounded-b-none border-x-0 border-b-0 bg-[#211a2d] p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:max-w-md sm:rounded-2xl sm:border"
+          >
+            <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-white/30 sm:hidden" />
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="eyebrow">INVITE THE CREW</p>
+                <h2 id="invite-title" className="mt-1 font-display text-3xl">
+                  Pass the mic around.
+                </h2>
+              </div>
+              <button onClick={() => setInviteOpen(false)} className="ghost shrink-0">
+                Close
+              </button>
+            </div>
+            <p className="mt-3 text-sm leading-6 text-white/55">
+              Friends can add songs from their phone. Playback stays right here.
+            </p>
+            <div className="my-5 w-32 rounded-xl bg-white p-2 shadow-lg shadow-black/20">
+              <QRCode
+                value={invite}
+                size={112}
+                level="M"
+                title={`QR code for room ${room.code}`}
+                className="h-auto w-full"
+              />
+            </div>
+            <p className="break-all rounded-lg bg-black/20 p-3 font-mono text-[10px] text-white/55">
+              {invite}
+            </p>
+            <button onClick={copyInvite} className="action mt-3 w-full">
+              {inviteCopied ? "Invite link copied!" : "Copy invite link"}
+            </button>
+            <p className="mt-4 text-center text-xs text-white/45 sm:hidden">
+              Swipe down to close
+            </p>
+          </section>
+        </div>
+      )}
       <nav
         aria-label="Mobile host navigation"
         className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-white/15 bg-[#181226]/95 px-2 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur sm:hidden"
@@ -862,7 +906,9 @@ function App() {
           <button
             key={label}
             type="button"
-            onClick={() => showMobileMessage(label)}
+            onClick={() =>
+              label === "Invite" ? setInviteOpen(true) : showMobileMessage(label)
+            }
             className="rounded-lg px-2 py-2 text-xs font-bold text-white/75 transition active:bg-white/15"
           >
             {label}
