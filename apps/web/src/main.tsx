@@ -781,8 +781,11 @@ function App() {
               <option value="underwater">Underwater</option>
             </select>
           </label>
-          <button onClick={() => setInviteOpen(true)} className="action">
+          <button onClick={() => setInviteOpen(true)} className="action sm:hidden">
             Invite
+          </button>
+          <button onClick={copyInvite} className="action hidden sm:block">
+            {inviteCopied ? "Invite copied!" : "Invite"}
           </button>
           <div className="min-w-0 text-right">
             <p className="eyebrow truncate">HOST: {userName.trim()}</p>
@@ -791,7 +794,7 @@ function App() {
         </div>
       </header>
       <div className="mx-auto grid max-w-7xl gap-5 px-5 pb-24 sm:pb-10 lg:grid-cols-[1.65fr_.85fr]">
-        <section className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl lg:row-span-2">
+        <section className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl">
           <div className="aspect-video">
             <YouTubePlayer videoId={room.currentItem?.youtubeId} onEnded={skip} />
           </div>
@@ -813,6 +816,28 @@ function App() {
             </button>
           </div>
         </section>
+        <aside className="panel hidden p-6 sm:block">
+          <p className="eyebrow">INVITE THE CREW</p>
+          <h2 className="mt-1 font-display text-3xl">Pass the mic around.</h2>
+          <p className="mt-3 text-sm leading-6 text-white/55">
+            Friends can add songs from their phone. Playback stays right here.
+          </p>
+          <div className="my-5 w-32 rounded-xl bg-white p-2 shadow-lg shadow-black/20">
+            <QRCode
+              value={invite}
+              size={112}
+              level="M"
+              title={`QR code for room ${room.code}`}
+              className="h-auto w-full"
+            />
+          </div>
+          <p className="break-all rounded-lg bg-black/20 p-3 font-mono text-[10px] text-white/55">
+            {invite}
+          </p>
+          <button onClick={copyInvite} className="action mt-3 w-full">
+            {inviteCopied ? "Invite link copied!" : "Copy invite link"}
+          </button>
+        </aside>
         <div className="min-w-0 lg:order-4">
           <Queue
             room={room}
@@ -836,7 +861,7 @@ function App() {
       )}
       {inviteOpen && (
         <div
-          className="fixed inset-0 z-[60] flex items-end bg-black/60 sm:items-center sm:justify-center sm:p-5"
+          className="fixed inset-0 z-[60] flex items-end bg-black/60 sm:hidden"
           role="presentation"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) setInviteOpen(false);
@@ -855,9 +880,9 @@ function App() {
               if (startY !== undefined && event.changedTouches[0].clientY - startY >= 80)
                 setInviteOpen(false);
             }}
-            className="panel w-full rounded-b-none border-x-0 border-b-0 bg-[#211a2d] p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:max-w-md sm:rounded-2xl sm:border"
+            className="panel w-full rounded-b-none border-x-0 border-b-0 bg-[#211a2d] p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
           >
-            <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-white/30 sm:hidden" />
+            <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-white/30" />
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="eyebrow">INVITE THE CREW</p>
@@ -887,7 +912,7 @@ function App() {
             <button onClick={copyInvite} className="action mt-3 w-full">
               {inviteCopied ? "Invite link copied!" : "Copy invite link"}
             </button>
-            <p className="mt-4 text-center text-xs text-white/45 sm:hidden">
+            <p className="mt-4 text-center text-xs text-white/45">
               Swipe down to close
             </p>
           </section>
