@@ -684,14 +684,6 @@ function App() {
             party queue from their phone.
           </p>
           <label className="mt-7 block text-xs font-bold text-white/65">
-            Party name
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-2 w-full rounded-lg border border-white/15 bg-black/20 px-3 py-3 text-sm outline-none focus:border-lime"
-            />
-          </label>
-          <label className="mt-4 block text-xs font-bold text-white/65">
             Your name
             <input
               value={userName}
@@ -699,6 +691,14 @@ function App() {
               className="mt-2 w-full rounded-lg border border-white/15 bg-black/20 px-3 py-3 text-sm outline-none focus:border-lime"
               placeholder="Your karaoke name"
               maxLength={50}
+            />
+          </label>
+          <label className="mt-4 block text-xs font-bold text-white/65">
+            Party name
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="mt-2 w-full rounded-lg border border-white/15 bg-black/20 px-3 py-3 text-sm outline-none focus:border-lime"
             />
           </label>
           <button
@@ -709,16 +709,6 @@ function App() {
             {starting ? "Starting party…" : "Start a party →"}
           </button>
           <div className="my-6 h-px bg-white/10" />
-          <label className="block text-xs font-bold text-white/65">
-            Your name
-            <input
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              className="mt-2 w-full rounded-lg border border-white/15 bg-black/20 px-3 py-3 text-sm outline-none focus:border-lime"
-              placeholder="Your karaoke name"
-              maxLength={50}
-            />
-          </label>
           <label className="block text-xs font-bold text-white/65">
             Have a room code?
             <div className="mt-2 flex gap-2">
