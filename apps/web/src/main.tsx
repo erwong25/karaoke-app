@@ -878,22 +878,6 @@ function App() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="invite-title"
-            onPointerDown={(event) => {
-              if (!event.isPrimary) return;
-              inviteDragStartY.current = event.clientY;
-              setIsDraggingInvite(true);
-              event.currentTarget.setPointerCapture(event.pointerId);
-            }}
-            onPointerMove={(event) => {
-              if (inviteDragStartY.current === undefined) return;
-              setInviteDragY(Math.max(0, event.clientY - inviteDragStartY.current));
-            }}
-            onPointerUp={finishInviteDrag}
-            onPointerCancel={() => {
-              inviteDragStartY.current = undefined;
-              setIsDraggingInvite(false);
-              setInviteDragY(0);
-            }}
             style={{
               transform: `translateY(${inviteDragY}px)`,
               opacity: 1 - inviteDragProgress * 0.55,
@@ -901,7 +885,28 @@ function App() {
             }}
             className="panel relative z-10 w-full rounded-b-none border-x-0 border-b-0 bg-[#211a2d] p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
           >
-            <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-white/30" />
+            <div
+              aria-label="Drag down to close invite"
+              className="mx-auto -mt-2 mb-5 flex h-8 w-full touch-none cursor-grab items-center justify-center active:cursor-grabbing"
+              onPointerDown={(event) => {
+                if (!event.isPrimary) return;
+                inviteDragStartY.current = event.clientY;
+                setIsDraggingInvite(true);
+                event.currentTarget.setPointerCapture(event.pointerId);
+              }}
+              onPointerMove={(event) => {
+                if (inviteDragStartY.current === undefined) return;
+                setInviteDragY(Math.max(0, event.clientY - inviteDragStartY.current));
+              }}
+              onPointerUp={finishInviteDrag}
+              onPointerCancel={() => {
+                inviteDragStartY.current = undefined;
+                setIsDraggingInvite(false);
+                setInviteDragY(0);
+              }}
+            >
+              <span className="h-1.5 w-12 rounded-full bg-white/30" />
+            </div>
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="eyebrow">INVITE THE CREW</p>
