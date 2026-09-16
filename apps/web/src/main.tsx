@@ -502,6 +502,8 @@ function App() {
   const [starting, setStarting] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteDragY, setInviteDragY] = useState(0);
+  const [isDraggingInvite, setIsDraggingInvite] = useState(false);
   const [mobileMessage, setMobileMessage] = useState("");
   const [theme, setTheme] = useState<HostTheme>(
     () => {
@@ -513,7 +515,7 @@ function App() {
   );
   const advancingSong = useRef(false);
   const mobileMessageTimer = useRef<number | undefined>(undefined);
-  const inviteTouchStartY = useRef<number | undefined>(undefined);
+  const inviteDragStartY = useRef<number | undefined>(undefined);
   const join = async (create = false) => {
     setError("");
     const displayName = userName.trim();
@@ -744,6 +746,19 @@ function App() {
     if (mobileMessageTimer.current) window.clearTimeout(mobileMessageTimer.current);
     mobileMessageTimer.current = window.setTimeout(() => setMobileMessage(""), 1600);
   };
+  const closeInvite = () => {
+    setInviteOpen(false);
+    setInviteDragY(0);
+    setIsDraggingInvite(false);
+  };
+  const finishInviteDrag = () => {
+    const dismissDistance = Math.min(180, window.innerHeight * 0.25);
+    inviteDragStartY.current = undefined;
+    setIsDraggingInvite(false);
+    if (inviteDragY >= dismissDistance) closeInvite();
+    else setInviteDragY(0);
+  };
+  const inviteDragProgress = Math.min(inviteDragY / 300, 1);
   return (
     <main
       className={`min-h-screen bg-[radial-gradient(circle_at_80%_0%,#442958,transparent_30%),#100e1b] ${theme === "light" ? "theme-light" : theme === "y2k" ? "theme-y2k" : theme === "futuristic" ? "theme-futuristic" : theme === "underwater" ? "theme-underwater" : ""}`}
@@ -851,26 +866,40 @@ function App() {
       )}
       {inviteOpen && (
         <div
-          className="fixed inset-0 z-[60] flex items-end bg-black/60 sm:hidden"
+          className="fixed inset-0 z-[60] flex items-end sm:hidden"
           role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setInviteOpen(false);
-          }}
         >
+          <div
+            className="absolute inset-0 bg-black/60 transition-opacity"
+            style={{ opacity: 1 - inviteDragProgress * 0.8 }}
+            onMouseDown={closeInvite}
+          />
           <section
             role="dialog"
             aria-modal="true"
             aria-labelledby="invite-title"
-            onTouchStart={(event) => {
-              inviteTouchStartY.current = event.touches[0].clientY;
+            onPointerDown={(event) => {
+              if (!event.isPrimary) return;
+              inviteDragStartY.current = event.clientY;
+              setIsDraggingInvite(true);
+              event.currentTarget.setPointerCapture(event.pointerId);
             }}
-            onTouchEnd={(event) => {
-              const startY = inviteTouchStartY.current;
-              inviteTouchStartY.current = undefined;
-              if (startY !== undefined && event.changedTouches[0].clientY - startY >= 80)
-                setInviteOpen(false);
+            onPointerMove={(event) => {
+              if (inviteDragStartY.current === undefined) return;
+              setInviteDragY(Math.max(0, event.clientY - inviteDragStartY.current));
             }}
-            className="panel w-full rounded-b-none border-x-0 border-b-0 bg-[#211a2d] p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+            onPointerUp={finishInviteDrag}
+            onPointerCancel={() => {
+              inviteDragStartY.current = undefined;
+              setIsDraggingInvite(false);
+              setInviteDragY(0);
+            }}
+            style={{
+              transform: `translateY(${inviteDragY}px)`,
+              opacity: 1 - inviteDragProgress * 0.55,
+              transition: isDraggingInvite ? "none" : "transform 180ms ease-out, opacity 180ms ease-out",
+            }}
+            className="panel relative z-10 w-full rounded-b-none border-x-0 border-b-0 bg-[#211a2d] p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
           >
             <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-white/30" />
             <div className="flex items-start justify-between gap-4">
@@ -880,7 +909,7 @@ function App() {
                   Pass the mic around.
                 </h2>
               </div>
-              <button onClick={() => setInviteOpen(false)} className="ghost shrink-0">
+              <button onClick={closeInvite} className="ghost shrink-0">
                 Close
               </button>
             </div>
@@ -903,7 +932,7 @@ function App() {
               {inviteCopied ? "Invite link copied!" : "Copy invite link"}
             </button>
             <p className="mt-4 text-center text-xs text-white/45">
-              Swipe down to close
+              Drag down to close
             </p>
           </section>
         </div>
