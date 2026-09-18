@@ -526,7 +526,7 @@ function GuestRoom({
               opacity: 1 - inviteDragProgress * 0.55,
               transition: isDraggingInvite ? "none" : "transform 180ms ease-out, opacity 180ms ease-out",
             }}
-            className="panel relative z-10 w-full rounded-b-none border-x-0 border-b-0 bg-[#211a2d] p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+            className="invite-sheet-enter panel relative z-10 w-full rounded-b-none border-x-0 border-b-0 bg-[#211a2d] p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
           >
             <div
               aria-label="Drag down to close invite"
@@ -567,7 +567,6 @@ function GuestRoom({
             <button onClick={copyInvite} className="action mt-3 w-full">
               {inviteCopied ? "Invite link copied!" : "Copy invite link"}
             </button>
-            <p className="mt-4 text-center text-xs text-white/45">Drag down to close</p>
           </section>
         </div>
       )}
@@ -977,7 +976,7 @@ function App() {
               opacity: 1 - inviteDragProgress * 0.55,
               transition: isDraggingInvite ? "none" : "transform 180ms ease-out, opacity 180ms ease-out",
             }}
-            className="panel relative z-10 w-full rounded-b-none border-x-0 border-b-0 bg-[#211a2d] p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+            className="invite-sheet-enter panel relative z-10 w-full rounded-b-none border-x-0 border-b-0 bg-[#211a2d] p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
           >
             <div
               aria-label="Drag down to close invite"
@@ -1030,9 +1029,6 @@ function App() {
             <button onClick={copyInvite} className="action mt-3 w-full">
               {inviteCopied ? "Invite link copied!" : "Copy invite link"}
             </button>
-            <p className="mt-4 text-center text-xs text-white/45">
-              Drag down to close
-            </p>
           </section>
         </div>
       )}
