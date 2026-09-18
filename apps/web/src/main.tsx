@@ -425,6 +425,10 @@ function GuestRoom({
   userName: string;
 }) {
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteDragY, setInviteDragY] = useState(0);
+  const [isDraggingInvite, setIsDraggingInvite] = useState(false);
+  const inviteDragStartY = useRef<number | undefined>(undefined);
   const invite = `${location.origin}?room=${room.code}`;
   const copyInvite = async () => {
     await navigator.clipboard.writeText(invite);
@@ -440,6 +444,21 @@ function GuestRoom({
       350,
     );
   };
+  const closeInvite = () => {
+    setInviteOpen(false);
+    setInviteDragY(0);
+    setIsDraggingInvite(false);
+  };
+  const finishInviteDrag = () => {
+    const dismissDistance = Math.min(180, window.innerHeight * 0.25);
+    inviteDragStartY.current = undefined;
+    setIsDraggingInvite(false);
+    if (inviteDragY >= dismissDistance) closeInvite();
+    else setInviteDragY(0);
+  };
+  const inviteDragProgress = Math.min(inviteDragY / 300, 1);
+  const scrollToSection = (id: string) =>
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_85%_0%,#442958,transparent_30%),#100e1b]">
       <header className="mx-auto flex max-w-3xl items-start justify-between gap-3 px-5 py-6 sm:items-center sm:gap-0">
@@ -454,14 +473,17 @@ function GuestRoom({
           <b className="block truncate text-sm">{userName}</b>
           <div className="mt-1 flex flex-wrap items-center justify-end gap-2">
             <b className="tracking-[.18em]">{room.code}</b>
-            <button onClick={copyInvite} className="ghost px-3 py-1 text-xs">
+            <button onClick={() => setInviteOpen(true)} className="ghost px-3 py-1 text-xs sm:hidden">
+              Invite
+            </button>
+            <button onClick={copyInvite} className="ghost hidden px-3 py-1 text-xs sm:block">
               {inviteCopied ? "Copied!" : "Invite"}
             </button>
           </div>
         </div>
       </header>
-      <div className="mx-auto max-w-3xl space-y-5 px-5 pb-10">
-        <section className="panel overflow-hidden">
+      <div className="mx-auto max-w-3xl space-y-5 px-5 pb-24 sm:pb-10">
+        <section id="guest-now-singing" className="panel scroll-mt-5 overflow-hidden">
           <div className="bg-[radial-gradient(circle_at_25%_10%,#75406d,transparent_40%),#241b30] p-6">
             <p className="eyebrow">NOW SINGING ON THE TV</p>
             <h1 className="mt-2 break-words font-display text-3xl sm:break-normal">
@@ -484,8 +506,80 @@ function GuestRoom({
           </div>
         </section>
         <Search room={room} onAdded={onAdded} userName={userName} />
-        <Queue room={room} host={false} onSkip={() => undefined} />
+        <div id="guest-queue" className="scroll-mt-5">
+          <Queue room={room} host={false} onSkip={() => undefined} />
+        </div>
       </div>
+      {inviteOpen && (
+        <div className="fixed inset-0 z-[60] flex items-end sm:hidden" role="presentation">
+          <div
+            className="absolute inset-0 bg-black/60 transition-opacity"
+            style={{ opacity: 1 - inviteDragProgress * 0.8 }}
+            onMouseDown={closeInvite}
+          />
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="guest-invite-title"
+            style={{
+              transform: `translateY(${inviteDragY}px)`,
+              opacity: 1 - inviteDragProgress * 0.55,
+              transition: isDraggingInvite ? "none" : "transform 180ms ease-out, opacity 180ms ease-out",
+            }}
+            className="panel relative z-10 w-full rounded-b-none border-x-0 border-b-0 bg-[#211a2d] p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+          >
+            <div
+              aria-label="Drag down to close invite"
+              className="mx-auto -mt-2 mb-5 flex h-8 w-full touch-none cursor-grab items-center justify-center active:cursor-grabbing"
+              onPointerDown={(event) => {
+                if (!event.isPrimary) return;
+                inviteDragStartY.current = event.clientY;
+                setIsDraggingInvite(true);
+                event.currentTarget.setPointerCapture(event.pointerId);
+              }}
+              onPointerMove={(event) => {
+                if (inviteDragStartY.current === undefined) return;
+                setInviteDragY(Math.max(0, event.clientY - inviteDragStartY.current));
+              }}
+              onPointerUp={finishInviteDrag}
+              onPointerCancel={() => {
+                inviteDragStartY.current = undefined;
+                setIsDraggingInvite(false);
+                setInviteDragY(0);
+              }}
+            >
+              <span className="h-1.5 w-12 rounded-full bg-white/30" />
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="eyebrow">INVITE THE CREW</p>
+                <h2 id="guest-invite-title" className="mt-1 font-display text-3xl">Pass the mic around.</h2>
+              </div>
+              <button onClick={closeInvite} className="ghost shrink-0">Close</button>
+            </div>
+            <p className="mt-3 text-sm leading-6 text-white/55">
+              Friends can add songs from their phone. Playback stays on the host screen.
+            </p>
+            <div className="my-5 w-32 rounded-xl bg-white p-2 shadow-lg shadow-black/20">
+              <QRCode value={invite} size={112} level="M" title={`QR code for room ${room.code}`} className="h-auto w-full" />
+            </div>
+            <p className="break-all rounded-lg bg-black/20 p-3 font-mono text-[10px] text-white/55">{invite}</p>
+            <button onClick={copyInvite} className="action mt-3 w-full">
+              {inviteCopied ? "Invite link copied!" : "Copy invite link"}
+            </button>
+            <p className="mt-4 text-center text-xs text-white/45">Drag down to close</p>
+          </section>
+        </div>
+      )}
+      <nav
+        aria-label="Mobile guest navigation"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-white/15 bg-[#181226]/95 px-2 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur sm:hidden"
+      >
+        <button type="button" onClick={() => scrollToSection("guest-now-singing")} className="rounded-lg px-2 py-2 text-xs font-bold text-white/75 transition active:bg-white/15">Now singing</button>
+        <button type="button" onClick={openSearch} className="rounded-lg px-2 py-2 text-xs font-bold text-white/75 transition active:bg-white/15">Search</button>
+        <button type="button" onClick={() => scrollToSection("guest-queue")} className="rounded-lg px-2 py-2 text-xs font-bold text-white/75 transition active:bg-white/15">Queue</button>
+        <button type="button" onClick={() => setInviteOpen(true)} className="rounded-lg px-2 py-2 text-xs font-bold text-white/75 transition active:bg-white/15">Invite</button>
+      </nav>
     </main>
   );
 }
