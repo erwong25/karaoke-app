@@ -473,12 +473,6 @@ function GuestRoom({
           <b className="block truncate text-sm">{userName}</b>
           <div className="mt-1 flex flex-wrap items-center justify-end gap-2">
             <b className="tracking-[.18em]">{room.code}</b>
-            <button onClick={() => setInviteOpen(true)} className="ghost px-3 py-1 text-xs sm:hidden">
-              Invite
-            </button>
-            <button onClick={copyInvite} className="ghost hidden px-3 py-1 text-xs sm:block">
-              {inviteCopied ? "Copied!" : "Invite"}
-            </button>
           </div>
         </div>
       </header>
@@ -879,12 +873,6 @@ function App() {
               <option value="underwater">Underwater</option>
             </select>
           </label>
-          <button onClick={() => setInviteOpen(true)} className="action sm:hidden">
-            Invite
-          </button>
-          <button onClick={copyInvite} className="action hidden sm:block">
-            {inviteCopied ? "Invite copied!" : "Invite"}
-          </button>
           <div className="min-w-0 text-right">
             <p className="eyebrow truncate">HOST: {userName.trim()}</p>
             <b className="tracking-[.2em]">{room.code}</b>
