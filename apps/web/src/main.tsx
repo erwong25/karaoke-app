@@ -512,10 +512,18 @@ function GuestRoom({
   room,
   onAdded,
   userName,
+  moderator,
+  onSkip,
+  onReorder,
+  onRemove,
 }: {
   room: Room;
   onAdded: () => void;
   userName: string;
+  moderator: boolean;
+  onSkip: () => void;
+  onReorder: (itemIds: string[]) => void;
+  onRemove: (itemId: string) => void;
 }) {
   const [inviteCopied, setInviteCopied] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -569,6 +577,11 @@ function GuestRoom({
         <div className="min-w-0 flex-1 text-right">
           <p className="eyebrow">YOU JOINED AS</p>
           <b className="block truncate text-sm">{userName}</b>
+          {moderator && (
+            <span className="mt-1 inline-block rounded-full bg-lime/10 px-2 py-1 text-[10px] font-bold text-lime">
+              MODERATOR
+            </span>
+          )}
           <div className="mt-1 flex flex-wrap items-center justify-end gap-2">
             <b className="tracking-[.18em]">{room.code}</b>
           </div>
@@ -601,7 +614,13 @@ function GuestRoom({
           <Search room={room} onAdded={onAdded} userName={userName} />
         </div>
         <div id="guest-queue" className="scroll-mt-5">
-          <Queue room={room} host={false} onSkip={() => undefined} />
+          <Queue
+            room={room}
+            host={moderator}
+            onSkip={onSkip}
+            onReorder={onReorder}
+            onRemove={onRemove}
+          />
         </div>
       </div>
       {inviteOpen && (
@@ -798,16 +817,19 @@ function App() {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [inviteOpen]);
   const refresh = () => socket.emit("room:join", room?.code);
+  const isModerator = userName.trim().toLowerCase() === "moderator";
+  const queueManagerHeaders = (roomCode: string) => ({
+    "Content-Type": "application/json",
+    "x-host-token": localStorage.getItem(hostTokenKey(roomCode)) || "",
+    "x-party-name": userName.trim(),
+  });
   const skip = async () => {
     if (!room || advancingSong.current) return;
     advancingSong.current = true;
     try {
       await fetch(`${API}/api/rooms/${room.code}/skip`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-host-token": localStorage.getItem(hostTokenKey(room.code)) || "",
-        },
+        headers: queueManagerHeaders(room.code),
       });
       refresh();
     } finally {
@@ -831,10 +853,7 @@ function App() {
     try {
       const response = await fetch(`${API}/api/rooms/${roomCode}/queue/order`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "x-host-token": localStorage.getItem(hostTokenKey(roomCode)) || "",
-        },
+        headers: queueManagerHeaders(roomCode),
         body: JSON.stringify({ itemIds }),
       });
       if (!response.ok) throw new Error("Could not save queue order");
@@ -854,9 +873,7 @@ function App() {
     try {
       const response = await fetch(`${API}/api/rooms/${roomCode}/queue/${itemId}`, {
         method: "DELETE",
-        headers: {
-          "x-host-token": localStorage.getItem(hostTokenKey(roomCode)) || "",
-        },
+        headers: queueManagerHeaders(roomCode),
       });
       if (!response.ok) throw new Error("Could not remove queue item");
     } catch (error) {
@@ -925,7 +942,17 @@ function App() {
       </main>
     );
   if (!host)
-    return <GuestRoom room={room} onAdded={refresh} userName={userName.trim()} />;
+    return (
+      <GuestRoom
+        room={room}
+        onAdded={refresh}
+        userName={userName.trim()}
+        moderator={isModerator}
+        onSkip={skip}
+        onReorder={reorderQueue}
+        onRemove={removeFromQueue}
+      />
+    );
   const invite = `${location.origin}?room=${room.code}`;
   const copyInvite = async () => {
     await navigator.clipboard.writeText(invite);
