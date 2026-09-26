@@ -311,11 +311,13 @@ function Search({
   onAdded,
   userName,
   sectionId = "song-search",
+  embedded = false,
 }: {
   room: Room;
   onAdded: () => void;
   userName: string;
   sectionId?: string;
+  embedded?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<Video[]>([]);
@@ -367,16 +369,21 @@ function Search({
     onAdded();
   }
   return (
-    <section id={sectionId} className="panel scroll-mt-5 p-5">
-      <div className="mb-4 flex items-end justify-between">
-        <div>
-          <p className="eyebrow">YOUTUBE KARAOKE</p>
-          <h2 className="font-display text-2xl">Find your moment</h2>
+    <section
+      id={sectionId}
+      className={embedded ? "scroll-mt-5" : "panel scroll-mt-5 p-5"}
+    >
+      {!embedded && (
+        <div className="mb-4 flex items-end justify-between">
+          <div>
+            <p className="eyebrow">YOUTUBE KARAOKE</p>
+            <h2 className="font-display text-2xl">Find your moment</h2>
+          </div>
+          <span className="rounded-full bg-lime/10 px-2 py-1 text-[10px] font-bold text-lime">
+            ADD TO QUEUE
+          </span>
         </div>
-        <span className="rounded-full bg-lime/10 px-2 py-1 text-[10px] font-bold text-lime">
-          ADD TO QUEUE
-        </span>
-      </div>
+      )}
       <div className="flex gap-2">
         <input
           id={`${sectionId}-input`}
@@ -494,6 +501,7 @@ function MobileSearchSheet({
           onAdded={onAdded}
           userName={userName}
           sectionId="mobile-song-search"
+          embedded
         />
       </section>
     </div>
