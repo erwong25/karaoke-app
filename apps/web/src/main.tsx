@@ -310,10 +310,12 @@ function Search({
   room,
   onAdded,
   userName,
+  sectionId = "song-search",
 }: {
   room: Room;
   onAdded: () => void;
   userName: string;
+  sectionId?: string;
 }) {
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<Video[]>([]);
@@ -365,7 +367,7 @@ function Search({
     onAdded();
   }
   return (
-    <section id="song-search" className="panel scroll-mt-5 p-5">
+    <section id={sectionId} className="panel scroll-mt-5 p-5">
       <div className="mb-4 flex items-end justify-between">
         <div>
           <p className="eyebrow">YOUTUBE KARAOKE</p>
@@ -377,7 +379,7 @@ function Search({
       </div>
       <div className="flex gap-2">
         <input
-          id="song-search-input"
+          id={`${sectionId}-input`}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="min-w-0 flex-1 rounded-xl border border-white/15 bg-black/20 px-4 py-3 text-sm outline-none placeholder:text-white/35 focus:border-lime"
@@ -415,6 +417,89 @@ function Search({
   );
 }
 
+function MobileSearchSheet({
+  open,
+  onClose,
+  room,
+  onAdded,
+  userName,
+}: {
+  open: boolean;
+  onClose: () => void;
+  room: Room;
+  onAdded: () => void;
+  userName: string;
+}) {
+  const [dragY, setDragY] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const dragStartY = useRef<number | undefined>(undefined);
+  if (!open) return null;
+  const finishDrag = () => {
+    const dismissDistance = Math.min(180, window.innerHeight * 0.25);
+    dragStartY.current = undefined;
+    setDragging(false);
+    if (dragY >= dismissDistance) {
+      setDragY(0);
+      onClose();
+    }
+    else setDragY(0);
+  };
+  const progress = Math.min(dragY / 300, 1);
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end sm:hidden" role="presentation">
+      <div
+        className="absolute inset-0 bg-black/60 transition-opacity"
+        style={{ opacity: 1 - progress * 0.8 }}
+        onMouseDown={onClose}
+      />
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mobile-search-title"
+        style={{
+          transform: `translateY(${dragY}px)`,
+          opacity: 1 - progress * 0.55,
+          transition: dragging ? "none" : "transform 180ms ease-out, opacity 180ms ease-out",
+        }}
+        className="invite-sheet-enter panel relative z-10 max-h-[90dvh] w-full overflow-y-auto rounded-b-none border-x-0 border-b-0 bg-[#211a2d] p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+      >
+        <div
+          aria-label="Drag down to close search"
+          className="mx-auto -mt-2 mb-3 flex h-8 w-full touch-none cursor-grab items-center justify-center active:cursor-grabbing"
+          onPointerDown={(event) => {
+            if (!event.isPrimary) return;
+            dragStartY.current = event.clientY;
+            setDragging(true);
+            event.currentTarget.setPointerCapture(event.pointerId);
+          }}
+          onPointerMove={(event) => {
+            if (dragStartY.current === undefined) return;
+            setDragY(Math.max(0, event.clientY - dragStartY.current));
+          }}
+          onPointerUp={finishDrag}
+          onPointerCancel={() => {
+            dragStartY.current = undefined;
+            setDragging(false);
+            setDragY(0);
+          }}
+        >
+          <span className="h-1.5 w-12 rounded-full bg-white/30" />
+        </div>
+        <div className="mb-3 flex items-center justify-between gap-4">
+          <h2 id="mobile-search-title" className="font-display text-2xl">Find a song</h2>
+          <button onClick={onClose} className="ghost shrink-0">Close</button>
+        </div>
+        <Search
+          room={room}
+          onAdded={onAdded}
+          userName={userName}
+          sectionId="mobile-song-search"
+        />
+      </section>
+    </div>
+  );
+}
+
 function GuestRoom({
   room,
   onAdded,
@@ -426,6 +511,7 @@ function GuestRoom({
 }) {
   const [inviteCopied, setInviteCopied] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [inviteDragY, setInviteDragY] = useState(0);
   const [isDraggingInvite, setIsDraggingInvite] = useState(false);
   const inviteDragStartY = useRef<number | undefined>(undefined);
@@ -436,6 +522,10 @@ function GuestRoom({
     setTimeout(() => setInviteCopied(false), 2000);
   };
   const openSearch = () => {
+    if (window.matchMedia("(max-width: 639px)").matches) {
+      setSearchOpen(true);
+      return;
+    }
     document
       .getElementById("song-search")
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -499,7 +589,9 @@ function GuestRoom({
             </button>
           </div>
         </section>
-        <Search room={room} onAdded={onAdded} userName={userName} />
+        <div className="hidden sm:block">
+          <Search room={room} onAdded={onAdded} userName={userName} />
+        </div>
         <div id="guest-queue" className="scroll-mt-5">
           <Queue room={room} host={false} onSkip={() => undefined} />
         </div>
@@ -564,6 +656,13 @@ function GuestRoom({
           </section>
         </div>
       )}
+      <MobileSearchSheet
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        room={room}
+        onAdded={onAdded}
+        userName={userName}
+      />
       <nav
         aria-label="Mobile guest navigation"
         className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-white/15 bg-[#181226]/95 px-2 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur sm:hidden"
@@ -589,6 +688,7 @@ function App() {
   const [starting, setStarting] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [inviteDragY, setInviteDragY] = useState(0);
   const [isDraggingInvite, setIsDraggingInvite] = useState(false);
   const [mobileMessage, setMobileMessage] = useState("");
@@ -933,7 +1033,7 @@ function App() {
             onRemove={removeFromQueue}
           />
         </div>
-        <div className="lg:order-3">
+        <div className="hidden lg:order-3 sm:block">
           <Search room={room} onAdded={refresh} userName={userName.trim()} />
         </div>
       </div>
@@ -1020,6 +1120,13 @@ function App() {
           </section>
         </div>
       )}
+      <MobileSearchSheet
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        room={room}
+        onAdded={refresh}
+        userName={userName.trim()}
+      />
       <nav
         aria-label="Mobile host navigation"
         className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-white/15 bg-[#181226]/95 px-2 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur sm:hidden"
@@ -1034,7 +1141,11 @@ function App() {
             key={label}
             type="button"
             onClick={() =>
-              label === "Invite" ? setInviteOpen(true) : showMobileMessage(label)
+              label === "Invite"
+                ? setInviteOpen(true)
+                : label === "Search"
+                  ? setSearchOpen(true)
+                  : showMobileMessage(label)
             }
             className="rounded-lg px-2 py-2 text-xs font-bold text-white/75 transition active:bg-white/15"
           >
